@@ -1,0 +1,1 @@
+{"responseId":"gemini_evt_001","sessionId":"gemini-session-alpha","timestamp":"2026-05-05T11:00:00.000Z","cwd":"/workspaces/alpha","model":"gemini-2.5-pro","usageMetadata":{"promptTokenCount":1300,"candidatesTokenCount":360,"cachedContentTokenCount":70},"prompt":"forbidden prompt text","candidates":[{"content":"forbidden completion text"}]}

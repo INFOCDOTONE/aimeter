@@ -1,6 +1,8 @@
 import * as vscode from 'vscode';
 import type { Logger } from '../lib/logger.js';
 import type { LocalEventStore } from '../store/persistence.js';
+import { exportCsv } from './csv-export.js';
+import { runDoctor } from './doctor.js';
 import type { AIMeterStatusBar } from './status-bar.js';
 import type { AIMeterDashboardProvider } from './webview/panel.js';
 
@@ -34,11 +36,13 @@ export function registerCommands(options: {
         await options.dashboardProvider.refresh();
       }
     }),
-    vscode.commands.registerCommand('aimeter.exportCsv', () => {
-      void vscode.window.showInformationMessage('AIMeter CSV export arrives in Milestone 3.');
+    vscode.commands.registerCommand('aimeter.exportCsv', async () => {
+      await exportCsv(options.store);
     }),
-    vscode.commands.registerCommand('aimeter.runDoctor', () => {
-      void vscode.window.showInformationMessage('AIMeter doctor arrives in Milestone 3.');
+    vscode.commands.registerCommand('aimeter.runDoctor', async () => {
+      const result = await runDoctor({ logger: options.logger, store: options.store });
+      await vscode.commands.executeCommand('workbench.view.extension.aimeter');
+      await options.dashboardProvider.showDoctor(result);
     }),
   );
 }

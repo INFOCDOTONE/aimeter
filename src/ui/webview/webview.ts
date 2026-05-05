@@ -1,4 +1,4 @@
-import { fromExtensionSchema, type WindowDataPayload, type WindowKey } from './messages.js';
+import { fromExtensionSchema, type DoctorResult, type WindowDataPayload, type WindowKey } from './messages.js';
 
 declare const acquireVsCodeApi: () => {
     postMessage: (message: unknown) => void;
@@ -23,6 +23,11 @@ window.addEventListener('message', (event: MessageEvent<unknown>) => {
         return;
     }
 
+    if (parsed.data.type === 'doctor-result') {
+        renderDoctor(parsed.data.payload);
+        return;
+    }
+
     activeWindow = parsed.data.payload.window;
     renderDashboard(parsed.data.payload);
 });
@@ -35,6 +40,7 @@ function renderDashboard(data: WindowDataPayload): void {
     app.replaceChildren(
         header(data),
         windowPicker(data.window),
+        dashboardActions(),
         data.hasEvents ? summaryCards(data) : emptyState(),
     );
 
@@ -105,6 +111,40 @@ function emptyState(): HTMLElement {
     const actions = element('div', 'actions');
     actions.append(actionButton('Run Doctor', 'run-doctor'), actionButton('Open Settings', 'open-settings'));
     container.append(actions);
+    return container;
+}
+
+function dashboardActions(): HTMLElement {
+    const actions = element('div', 'actions');
+    actions.append(actionButton('Export CSV', 'export-csv'), actionButton('Run Doctor', 'run-doctor'));
+    return actions;
+}
+
+function renderDoctor(result: DoctorResult): void {
+    if (app === null) {
+        return;
+    }
+
+    const panel = element('section', 'panel');
+    panel.append(element('h2', undefined, 'Doctor'));
+    panel.append(element('p', 'muted', `Updated ${formatTime(result.generatedAt)}`));
+
+    for (const check of result.checks) {
+        const item = element('article', `session doctor-${check.severity}`);
+        item.append(element('strong', undefined, check.name), element('span', 'muted', check.message));
+        panel.append(item);
+    }
+
+    const actions = element('div', 'actions');
+    actions.append(actionButton('Back to Dashboard', 'request-dashboard'), actionButton('Open Settings', 'open-settings'));
+    app.replaceChildren(headerForDoctor(result), actions, panel);
+}
+
+function headerForDoctor(result: DoctorResult): HTMLElement {
+    const container = element('div', 'title');
+    const errors = result.checks.filter((check) => check.severity === 'error').length;
+    const warnings = result.checks.filter((check) => check.severity === 'warn').length;
+    container.append(element('h1', undefined, 'AIMeter'), element('span', 'muted', `${errors} errors · ${warnings} warnings`));
     return container;
 }
 
@@ -204,10 +244,17 @@ function breakdownRows(items: WindowDataPayload['byAgent'], maxTokens: number): 
     });
 }
 
-function actionButton(label: string, type: 'run-doctor' | 'open-settings'): HTMLButtonElement {
+function actionButton(
+    label: string,
+    type: 'export-csv' | 'run-doctor' | 'open-settings' | 'request-dashboard',
+): HTMLButtonElement {
     const button = element('button', undefined, label);
     button.setAttribute('type', 'button');
     button.addEventListener('click', () => {
+        if (type === 'request-dashboard') {
+            requestWindow(activeWindow);
+            return;
+        }
         vscode.postMessage({ type });
     });
     return button;

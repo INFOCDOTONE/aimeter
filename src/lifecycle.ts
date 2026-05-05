@@ -1,13 +1,20 @@
 import * as vscode from 'vscode';
 import { Logger } from './lib/logger.js';
+import type { JsonlParser } from './parsers/base.js';
 import { ClaudeCodeParser } from './parsers/claude-code.js';
+import { CodexCliParser } from './parsers/codex-cli.js';
+import { GeminiCliParser } from './parsers/gemini-cli.js';
 import { readSettings } from './settings/index.js';
 import { LocalEventStore } from './store/persistence.js';
 import { registerCommands } from './ui/commands.js';
 import { AIMeterStatusBar } from './ui/status-bar.js';
 import { AIMeterDashboardProvider } from './ui/webview/panel.js';
 import { UsageWatcher } from './watcher/index.js';
-import { resolveClaudeCodePaths } from './watcher/path-resolver.js';
+import {
+  resolveClaudeCodePaths,
+  resolveCodexCliPaths,
+  resolveGeminiCliPaths,
+} from './watcher/path-resolver.js';
 
 export async function startAIMeter(context: vscode.ExtensionContext): Promise<void> {
   const output = vscode.window.createOutputChannel('AIMeter');
@@ -34,10 +41,28 @@ export async function startAIMeter(context: vscode.ExtensionContext): Promise<vo
   );
 
   const settings = readSettings();
-  if (settings.parsers.claudeCode.enabled) {
-    const watcher = new UsageWatcher({
+  const enabledParsers: Array<{ enabled: boolean; paths: string[]; parser: JsonlParser }> = [
+    {
+      enabled: settings.parsers.claudeCode.enabled,
       paths: resolveClaudeCodePaths(settings.parsers.claudeCode.paths),
       parser: new ClaudeCodeParser(),
+    },
+    {
+      enabled: settings.parsers.codexCli.enabled,
+      paths: resolveCodexCliPaths(settings.parsers.codexCli.paths),
+      parser: new CodexCliParser(),
+    },
+    {
+      enabled: settings.parsers.geminiCli.enabled,
+      paths: resolveGeminiCliPaths(settings.parsers.geminiCli.paths),
+      parser: new GeminiCliParser(),
+    },
+  ];
+
+  for (const parserConfig of enabledParsers.filter((config) => config.enabled)) {
+    const watcher = new UsageWatcher({
+      paths: parserConfig.paths,
+      parser: parserConfig.parser,
       store,
       logger,
       onEvents: async (events) => {

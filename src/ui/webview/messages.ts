@@ -49,6 +49,26 @@ export const usageSessionSchema = usageTotalsSchema
     .strict();
 export type UsageSession = z.infer<typeof usageSessionSchema>;
 
+export const doctorSeveritySchema = z.enum(['ok', 'warn', 'error']);
+export type DoctorSeverity = z.infer<typeof doctorSeveritySchema>;
+
+export const doctorCheckSchema = z
+    .object({
+        name: z.string().min(1),
+        severity: doctorSeveritySchema,
+        message: z.string().min(1),
+    })
+    .strict();
+export type DoctorCheck = z.infer<typeof doctorCheckSchema>;
+
+export const doctorResultSchema = z
+    .object({
+        generatedAt: z.string().datetime(),
+        checks: z.array(doctorCheckSchema),
+    })
+    .strict();
+export type DoctorResult = z.infer<typeof doctorResultSchema>;
+
 export const windowDataPayloadSchema = z
     .object({
         window: windowKeySchema,
@@ -67,6 +87,7 @@ export type WindowDataPayload = z.infer<typeof windowDataPayloadSchema>;
 
 export const fromExtensionSchema = z.discriminatedUnion('type', [
     z.object({ type: z.literal('window-data'), payload: windowDataPayloadSchema }).strict(),
+    z.object({ type: z.literal('doctor-result'), payload: doctorResultSchema }).strict(),
     z.object({ type: z.literal('error'), message: z.string().min(1) }).strict(),
 ]);
 export type WindowData = Extract<z.infer<typeof fromExtensionSchema>, { type: 'window-data' }>;

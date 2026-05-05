@@ -2,6 +2,7 @@ import { randomBytes } from 'node:crypto';
 import * as vscode from 'vscode';
 import type { Logger } from '../../lib/logger.js';
 import type { LocalEventStore } from '../../store/persistence.js';
+import type { DoctorResult } from '../doctor.js';
 import { readWindowData } from '../dashboard-data.js';
 import { fromWebviewSchema, type FromExtension, type WindowKey } from './messages.js';
 
@@ -11,6 +12,7 @@ export class AIMeterDashboardProvider implements vscode.WebviewViewProvider {
   private readonly logger: Logger;
   private readonly store: LocalEventStore;
   private activeWindow: WindowKey = 'today';
+  private pendingDoctorResult: DoctorResult | undefined;
   private view: vscode.WebviewView | undefined;
 
   public constructor(options: {
@@ -33,6 +35,10 @@ export class AIMeterDashboardProvider implements vscode.WebviewViewProvider {
     webviewView.webview.onDidReceiveMessage((unknownMessage: unknown) => {
       void this.handleMessage(unknownMessage);
     });
+    if (this.pendingDoctorResult !== undefined) {
+      void this.showDoctor(this.pendingDoctorResult);
+      return;
+    }
     void this.refresh();
   }
 
@@ -40,6 +46,7 @@ export class AIMeterDashboardProvider implements vscode.WebviewViewProvider {
     if (this.view === undefined) {
       return;
     }
+    this.pendingDoctorResult = undefined;
 
     try {
       const message = await readWindowData(this.store, this.activeWindow);
@@ -53,6 +60,14 @@ export class AIMeterDashboardProvider implements vscode.WebviewViewProvider {
         message: 'AIMeter could not load dashboard data. See Output logs for details.',
       });
     }
+  }
+
+  public async showDoctor(result: DoctorResult): Promise<void> {
+    this.pendingDoctorResult = result;
+    if (this.view === undefined) {
+      return;
+    }
+    await this.postMessage({ type: 'doctor-result', payload: result });
   }
 
   private async handleMessage(unknownMessage: unknown): Promise<void> {
@@ -245,6 +260,15 @@ function getHtml(webview: vscode.Webview, extensionUri: vscode.Uri): string {
       }
       .confidence.low {
         background: var(--vscode-testing-iconFailed);
+      }
+      .doctor-ok {
+        border-color: var(--vscode-testing-iconPassed);
+      }
+      .doctor-warn {
+        border-color: var(--vscode-testing-iconQueued);
+      }
+      .doctor-error {
+        border-color: var(--vscode-testing-iconFailed);
       }
       .error {
         border-color: var(--vscode-inputValidation-errorBorder);

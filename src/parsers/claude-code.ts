@@ -1,6 +1,7 @@
 import path from 'node:path';
 import { z } from 'zod';
 import type { JsonlParser } from './base.js';
+import { normalizeTimestamp, projectSlugFromSource, safeJson } from './helpers.js';
 import { parsedUsageEventSchema, type ParseResult } from './types.js';
 
 const usageSchema = z
@@ -88,30 +89,3 @@ export class ClaudeCodeParser implements JsonlParser {
   }
 }
 
-function safeJson(line: string): { ok: true; value: unknown } | { ok: false } {
-  try {
-    return { ok: true, value: JSON.parse(line) as unknown };
-  } catch {
-    return { ok: false };
-  }
-}
-
-function normalizeTimestamp(value: string | undefined): string {
-  if (!value) {
-    return new Date().toISOString();
-  }
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) {
-    return new Date().toISOString();
-  }
-  return date.toISOString();
-}
-
-function projectSlugFromSource(sourceFile: string, cwd: string | undefined): string {
-  const raw = cwd ? path.basename(cwd) : path.basename(path.dirname(sourceFile));
-  return raw
-    .toLowerCase()
-    .replace(/[^a-z0-9._-]+/g, '-')
-    .replace(/^-+|-+$/g, '')
-    .slice(0, 80) || 'unknown-project';
-}
