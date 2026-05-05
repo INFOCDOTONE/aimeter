@@ -2,7 +2,7 @@
   "name": "aimeter",
   "displayName": "INFOC ONE AIMeter",
   "description": "Meter every AI agent, in one place. Track Claude Code, Codex CLI, Gemini CLI token usage locally and privately.",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "publisher": "infoc-one",
   "license": "MIT",
   "private": true,

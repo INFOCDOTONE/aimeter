@@ -91,6 +91,28 @@ describe('CodexCliParser', () => {
         expect(JSON.stringify(parsed.event)).not.toContain('forbidden prompt text');
     });
 
+    it('uses VS Code Codex turn_context model for token_count events', async () => {
+        const lines = (await fixture('v2-vscode-turn-context-token-count.jsonl')).split('\n').filter(Boolean);
+        const envelopeParser = new CodexCliParser();
+        const sourceFile = 'C:\\Users\\dev\\.codex\\sessions\\2026\\05\\05\\session.jsonl';
+
+        envelopeParser.parseLine(lines[0] ?? '', sourceFile);
+        envelopeParser.parseLine(lines[1] ?? '', sourceFile);
+        const parsed = envelopeParser.parseLine(lines[2] ?? '', sourceFile);
+
+        expect(parsed.ok).toBe(true);
+        if (!parsed.ok) {
+            throw new Error(parsed.reason);
+        }
+
+        expect(parsed.event.model).toBe('gpt-5.5');
+        expect(parsed.event.sessionId).toBe('codex-session-vscode');
+        expect(parsed.event.inputTokens).toBe(6540);
+        expect(parsed.event.outputTokens).toBe(235);
+        expect(parsed.event.cacheReadTokens).toBe(20864);
+        expect(parsed.event.projectSlug).toBe('aimeter.infoc.one');
+    });
+
     it('deduplicates repeated envelope token_count snapshots by cumulative total', async () => {
         const lines = (await fixture('v2-envelope-token-count.jsonl')).split('\n').filter(Boolean);
         const envelopeParser = new CodexCliParser();

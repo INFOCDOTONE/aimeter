@@ -22,6 +22,7 @@ export class LocalEventStore {
   private readonly metaPath: string;
   private readonly offsetsPath: string;
   private readonly ids = new Set<string>();
+  private offsetWriteQueue = Promise.resolve();
   private pricingOverrides: PricingOverrides;
 
   public constructor(globalStoragePath: string, pricingOverrides: PricingOverrides = {}) {
@@ -124,6 +125,14 @@ export class LocalEventStore {
   }
 
   public async setOffset(filePath: string, offset: number): Promise<void> {
+    this.offsetWriteQueue = this.offsetWriteQueue.then(
+      () => this.writeOffset(filePath, offset),
+      () => this.writeOffset(filePath, offset),
+    );
+    await this.offsetWriteQueue;
+  }
+
+  private async writeOffset(filePath: string, offset: number): Promise<void> {
     const offsets = await this.readOffsets();
     offsets[filePath] = offset;
     await writeJsonFileAtomic(this.offsetsPath, offsetMapSchema.parse(offsets));

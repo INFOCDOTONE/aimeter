@@ -275,7 +275,7 @@ function renderAgentPanel(data: WindowDataPayload): HTMLElement {
 
     const maxT = Math.max(1, ...data.byAgent.map((a) => a.tokens));
     for (const agent of data.byAgent) {
-        const row = div('agent-row');
+        const row = div(agent.tokens === 0 ? 'agent-row agent-row-empty' : 'agent-row');
 
         const labelEl = div('agent-label');
         const dot = span('agent-dot');
@@ -284,12 +284,12 @@ function renderAgentPanel(data: WindowDataPayload): HTMLElement {
 
         const track = div('agent-track');
         const fill = div('agent-fill');
-        fill.style.width = `${Math.max(8, (agent.tokens / maxT) * 100)}%`;
+        fill.style.width = agent.tokens === 0 ? '0%' : `${Math.max(8, (agent.tokens / maxT) * 100)}%`;
         fill.style.background = agentColor(agent.id);
         track.append(fill);
 
         const stats = div('agent-stats');
-        const tokensEl = span('tokens', fmtTokens(agent.tokens));
+        const tokensEl = span(agent.tokens === 0 ? 'tokens muted' : 'tokens', agent.tokens === 0 ? 'No parsed usage' : fmtTokens(agent.tokens));
         const costEl = div('cost');
         costEl.innerHTML = `${confDot(agent.costConfidence)}${fmtUsd(agent.costUsdEstimated)}`;
         stats.append(tokensEl, costEl);

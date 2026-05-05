@@ -62,7 +62,8 @@ export class UsageWatcher {
   private async processFile(filePath: string): Promise<void> {
     try {
       const currentStat = await stat(filePath);
-      const previousOffset = await this.options.store.getOffset(filePath);
+      const offsetKey = offsetKeyForFile(this.options.parser.agent, filePath);
+      const previousOffset = await this.options.store.getOffset(offsetKey);
       const start = previousOffset > currentStat.size ? 0 : previousOffset;
       const lines = await readNewLines(filePath, start);
       const events: ParsedUsageEvent[] = [];
@@ -80,7 +81,7 @@ export class UsageWatcher {
         await this.options.onEvents(events);
       }
 
-      await this.options.store.setOffset(filePath, currentStat.size);
+      await this.options.store.setOffset(offsetKey, currentStat.size);
     } catch (error) {
       this.options.logger.warn('watcher', 'Failed to process usage file', {
         fileName: path.basename(filePath),
@@ -107,6 +108,12 @@ export class UsageWatcher {
       });
     }
   }
+}
+
+const OFFSET_SCHEMA_VERSION = 2;
+
+export function offsetKeyForFile(agent: string, filePath: string): string {
+  return `${agent}:v${OFFSET_SCHEMA_VERSION}:${path.resolve(filePath)}`;
 }
 
 export function isJsonlFile(filePath: string): boolean {

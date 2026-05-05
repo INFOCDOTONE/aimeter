@@ -360,6 +360,11 @@ function getHtml(webview: vscode.Webview, extensionUri: vscode.Uri): string {
         overflow: hidden;
       }
       .agent-fill { height: 100%; border-radius: 999px; }
+      .agent-row-empty .agent-label,
+      .agent-row-empty .agent-track,
+      .agent-row-empty .agent-stats {
+        opacity: 0.72;
+      }
       .agent-stats { text-align: right; }
       .agent-stats .tokens { font-weight: 600; font-variant-numeric: tabular-nums; font-size: 12px; }
       .agent-stats .cost   { color: var(--vscode-descriptionForeground); font-size: 11px; font-variant-numeric: tabular-nums; }

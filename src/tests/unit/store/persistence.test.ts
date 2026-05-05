@@ -34,6 +34,20 @@ describe('LocalEventStore', () => {
     await expect(store.getOffset('/tmp/session.jsonl')).resolves.toBe(42);
   });
 
+  it('serializes concurrent offset writes without dropping keys', async () => {
+    const dir = await mkdtemp(path.join(os.tmpdir(), 'aimeter-store-'));
+    const store = new LocalEventStore(dir);
+    await store.init();
+
+    await Promise.all(Array.from({ length: 20 }, (_, index) => store.setOffset(`/tmp/session-${index}.jsonl`, index)));
+
+    await Promise.all(
+      Array.from({ length: 20 }, async (_, index) => {
+        await expect(store.getOffset(`/tmp/session-${index}.jsonl`)).resolves.toBe(index);
+      }),
+    );
+  });
+
   it('clears offsets with stored events so existing logs can be re-imported', async () => {
     const dir = await mkdtemp(path.join(os.tmpdir(), 'aimeter-store-'));
     const store = new LocalEventStore(dir);

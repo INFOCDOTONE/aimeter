@@ -25,7 +25,9 @@ pnpm-lock.yaml
 
 dist/**/*.map
 dist/**/*.vsix
-node_modules/**src/**
+node_modules/**
+*.csv
+aimeter-export-*.csv
 fixtures/**
 scripts/**
 coverage/**

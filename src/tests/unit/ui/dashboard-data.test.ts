@@ -18,7 +18,8 @@ describe('dashboard data', () => {
         expect(message.payload.totals.billing.apiMeteredTokens).toBe(1500);
         expect(message.payload.totals.billing.subscriptionIncludedTokens).toBe(0);
         expect(message.payload.totals.eventCount).toBe(2);
-        expect(message.payload.byAgent.map((agent) => agent.label)).toEqual(['Claude Code', 'Codex CLI']);
+        expect(message.payload.byAgent.map((agent) => agent.label)).toEqual(['Claude Code', 'Codex CLI', 'Gemini CLI']);
+        expect(message.payload.byAgent.find((agent) => agent.id === 'gemini-cli')?.tokens).toBe(0);
         expect(message.payload.byModel.map((model) => model.label)).toEqual(['claude-sonnet-4', 'gpt-5']);
         expect(message.payload.daily).toHaveLength(7);
     });

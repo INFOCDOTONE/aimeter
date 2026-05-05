@@ -14,6 +14,7 @@ import type {
 } from './webview/messages.js';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
+const SUPPORTED_AGENTS: Agent[] = ['claude-code', 'codex-cli', 'gemini-cli'];
 
 export async function readWindowData(
     store: LocalEventStore,
@@ -99,6 +100,14 @@ function buildBreakdowns(events: StoredEvent[], key: 'agent' | 'model', billingO
         const group = groups.get(groupKey) ?? [];
         group.push(event);
         groups.set(groupKey, group);
+    }
+
+    if (key === 'agent') {
+        for (const agent of SUPPORTED_AGENTS) {
+            if (!groups.has(agent)) {
+                groups.set(agent, []);
+            }
+        }
     }
 
     return [...groups.entries()]

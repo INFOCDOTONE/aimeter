@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.3
+
+- Backfill Codex CLI usage after parser offset fixes by versioning watcher offsets per agent.
+- Keep Claude Code, Codex CLI, and Gemini CLI visible in the dashboard agent meter, including no-usage states.
+
 ## 0.1.2
 
 - Add Codex CLI envelope token-count parsing for newer local JSONL session logs.
