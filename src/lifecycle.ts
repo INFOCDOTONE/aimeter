@@ -38,6 +38,7 @@ export async function startAIMeter(context: vscode.ExtensionContext): Promise<vo
     vscode.window.registerWebviewViewProvider(
       AIMeterDashboardProvider.viewType,
       dashboardProvider,
+      { webviewOptions: { retainContextWhenHidden: true } },
     ),
   );
 

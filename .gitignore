@@ -16,3 +16,4 @@ Thumbs.db
 *.tsbuildinfo
 
 .pnpm-store/
+.gstack/

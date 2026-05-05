@@ -105,7 +105,7 @@ function renderHeroSection(data: WindowDataPayload): HTMLElement {
     const costVal = div('metric-value mono');
     costVal.innerHTML = `${confDot(totals.costConfidence)}${fmtUsd(totals.costUsdEstimated)}`;
     const rate = totals.tokens > 0
-        ? `$${((totals.costUsdEstimated / totals.tokens) * 1_000_000).toFixed(4)}/1M tokens`
+        ? `$${((totals.costUsdEstimated / totals.tokens) * 1_000_000).toFixed(2)}/1M tokens`
         : `${totals.costConfidence} confidence`;
     costCard.append(costVal, p('metric-detail', rate));
 
@@ -139,10 +139,10 @@ function renderCompositionBar(totals: WindowDataPayload['totals']): HTMLElement 
     if (total === 0) return wrap;
 
     const segments = [
-        { name: 'Input',    value: totals.inputTokens,      cls: 'seg-input comp-dot' },
-        { name: 'Output',   value: totals.outputTokens,     cls: 'seg-output comp-dot' },
-        { name: 'Cache↩',  value: totals.cacheReadTokens,  cls: 'seg-cache-r comp-dot' },
-        { name: 'Cache↑',  value: totals.cacheWriteTokens, cls: 'seg-cache-w comp-dot' },
+        { name: 'Input',   value: totals.inputTokens,      cls: 'seg-input comp-dot' },
+        { name: 'Output',  value: totals.outputTokens,     cls: 'seg-output comp-dot' },
+        { name: 'Cache R', value: totals.cacheReadTokens,  cls: 'seg-cache-r comp-dot' },
+        { name: 'Cache W', value: totals.cacheWriteTokens, cls: 'seg-cache-w comp-dot' },
     ].filter((s) => s.value > 0);
 
     const bar = div('comp-bar');
@@ -281,7 +281,7 @@ function renderAgentPanel(data: WindowDataPayload): HTMLElement {
 
         const track = div('agent-track');
         const fill = div('agent-fill');
-        fill.style.width = `${Math.max(2, (agent.tokens / maxT) * 100)}%`;
+        fill.style.width = `${Math.max(8, (agent.tokens / maxT) * 100)}%`;
         fill.style.background = agentColor(agent.id);
         track.append(fill);
 
