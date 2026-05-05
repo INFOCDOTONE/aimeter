@@ -14,6 +14,9 @@ describe('dashboard data', () => {
 
         expect(message.payload.hasEvents).toBe(true);
         expect(message.payload.totals.tokens).toBe(1500);
+        expect(message.payload.totals.costUsdEstimated).toBe(0.02);
+        expect(message.payload.totals.billing.apiMeteredTokens).toBe(1500);
+        expect(message.payload.totals.billing.subscriptionIncludedTokens).toBe(0);
         expect(message.payload.totals.eventCount).toBe(2);
         expect(message.payload.byAgent.map((agent) => agent.label)).toEqual(['Claude Code', 'Codex CLI']);
         expect(message.payload.byModel.map((model) => model.label)).toEqual(['claude-sonnet-4', 'gpt-5']);
@@ -30,6 +33,27 @@ describe('dashboard data', () => {
         );
 
         expect(message.payload.totals.costConfidence).toBe('low');
+    });
+
+    it('separates subscription-included usage from API estimated cost', () => {
+        const message = buildWindowData(
+            [
+                event({ id: 'one', agent: 'claude-code', model: 'claude-sonnet-4', inputTokens: 1000, costUsdEstimated: 0.01 }),
+                event({ id: 'two', agent: 'codex-cli', model: 'gpt-5', outputTokens: 500, costUsdEstimated: 0.02 }),
+            ],
+            'today',
+            new Date('2026-05-05T00:00:00.000Z'),
+            new Date('2026-05-06T00:00:00.000Z'),
+            new Date('2026-05-05T12:00:00.000Z'),
+            { agentOverrides: { 'claude-code': 'subscription-included' }, modelOverrides: {} },
+        );
+
+        expect(message.payload.totals.tokens).toBe(1500);
+        expect(message.payload.totals.costUsdEstimated).toBe(0.02);
+        expect(message.payload.totals.billing.apiMeteredTokens).toBe(500);
+        expect(message.payload.totals.billing.subscriptionIncludedTokens).toBe(1000);
+        expect(message.payload.totals.billing.subscriptionIncludedCostUsdEstimated).toBe(0.01);
+        expect(message.payload.byAgent.find((agent) => agent.id === 'claude-code')?.billingBasis).toBe('subscription-included');
     });
 });
 

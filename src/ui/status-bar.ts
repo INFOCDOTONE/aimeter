@@ -32,14 +32,14 @@ export class AIMeterStatusBar {
       return;
     }
 
-    const summary = await this.store.readTodaySummary();
+    const summary = await this.store.readTodaySummary(new Date(), settings.billing);
     if (summary.tokens === 0) {
       this.showNoData();
       return;
     }
 
     this.item.text = formatStatusBarText(summary, settings.statusBar.format);
-    this.item.tooltip = `${summary.tokens.toLocaleString()} tokens today. Estimated cost with confidence indicators.`;
+    this.item.tooltip = `${summary.tokens.toLocaleString()} tokens today. API-estimated cost with confidence indicators.`;
     this.item.show();
   }
 

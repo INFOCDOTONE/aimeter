@@ -7,17 +7,24 @@ describe('pricing compute', () => {
     expect(normalizeModel('claude-sonnet-4-20250514')).toBe('claude-sonnet-4');
   });
 
-  it('falls back to family key when minor version has no exact catalog match', () => {
-    // claude-sonnet-4-6 is not in catalog; should match claude-sonnet-4
+  it('matches exact minor-version catalog entries', () => {
     const estimate = estimateCost({ ...event(), model: 'claude-sonnet-4-6' });
     expect(estimate.costUsdEstimated).toBeGreaterThan(0);
     expect(estimate.pricingSnapshot.source).toBe('catalog');
   });
 
-  it('matches claude-opus-4-7 via family fallback', () => {
+  it('prices claude-opus-4-7 with its current exact catalog entry', () => {
     const estimate = estimateCost({ ...event(), model: 'claude-opus-4-7' });
-    expect(estimate.costUsdEstimated).toBeGreaterThan(0);
+    expect(estimate.costUsdEstimated).toBe(0.03);
     expect(estimate.pricingSnapshot.source).toBe('catalog');
+    expect(estimate.pricingSnapshot.inputUsdPerMillion).toBe(5);
+  });
+
+  it('does not fall back unknown minor model versions to a different price family', () => {
+    const estimate = estimateCost({ ...event(), model: 'claude-opus-4-99' });
+    expect(estimate.costUsdEstimated).toBe(0);
+    expect(estimate.costConfidence).toBe('low');
+    expect(estimate.pricingSnapshot.source).toBe('missing');
   });
 
   it('matches claude-haiku-4-5-20251001 via date strip', () => {

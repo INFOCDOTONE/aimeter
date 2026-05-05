@@ -1,5 +1,5 @@
 import { createReadStream } from 'node:fs';
-import { stat } from 'node:fs/promises';
+import { readdir, stat } from 'node:fs/promises';
 import path from 'node:path';
 import { watch, type FSWatcher } from 'chokidar';
 import type { Logger } from '../lib/logger.js';
@@ -24,9 +24,8 @@ export class UsageWatcher {
   }
 
   public start(): void {
-    const patterns = this.options.paths.map((rootPath) => path.join(rootPath, '**', '*.jsonl'));
-    this.watcher = watch(patterns, {
-      ignoreInitial: false,
+    this.watcher = watch(this.options.paths, {
+      ignoreInitial: true,
       awaitWriteFinish: {
         stabilityThreshold: 500,
         pollInterval: 100,
@@ -34,20 +33,30 @@ export class UsageWatcher {
     });
 
     this.watcher.on('add', (filePath) => {
-      void this.processFile(filePath);
+      if (isJsonlFile(filePath)) {
+        void this.processFile(filePath);
+      }
     });
     this.watcher.on('change', (filePath) => {
-      void this.processFile(filePath);
+      if (isJsonlFile(filePath)) {
+        void this.processFile(filePath);
+      }
     });
     this.watcher.on('error', (error) => {
       this.options.logger.warn('watcher', 'Watcher error', {
         error: error instanceof Error ? error.message : String(error),
       });
     });
+
+    void this.processExistingFiles();
   }
 
   public async stop(): Promise<void> {
     await this.watcher?.close();
+  }
+
+  public async scanNow(): Promise<void> {
+    await this.processExistingFiles();
   }
 
   private async processFile(filePath: string): Promise<void> {
@@ -79,6 +88,29 @@ export class UsageWatcher {
       });
     }
   }
+
+  private async processExistingFiles(): Promise<void> {
+    try {
+      let fileCount = 0;
+      for (const rootPath of this.options.paths) {
+        const files = await listJsonlFiles(rootPath);
+        fileCount += files.length;
+        for (const filePath of files) {
+          await this.processFile(filePath);
+        }
+      }
+
+      this.options.logger.info('watcher', 'Initial usage-log scan completed', { fileCount });
+    } catch (error) {
+      this.options.logger.warn('watcher', 'Initial usage-log scan failed', {
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
+  }
+}
+
+export function isJsonlFile(filePath: string): boolean {
+  return path.extname(filePath).toLowerCase() === '.jsonl';
 }
 
 async function readNewLines(filePath: string, start: number): Promise<string[]> {
@@ -96,4 +128,44 @@ async function readNewLines(filePath: string, start: number): Promise<string[]> 
     .toString('utf8')
     .split('\n')
     .filter((line) => line.trim().length > 0);
+}
+
+export async function listJsonlFiles(rootPath: string): Promise<string[]> {
+  const rootStat = await statIfExists(rootPath);
+  if (rootStat === undefined) {
+    return [];
+  }
+
+  if (rootStat.isFile()) {
+    return isJsonlFile(rootPath) ? [rootPath] : [];
+  }
+
+  if (!rootStat.isDirectory()) {
+    return [];
+  }
+
+  const entries = await readdir(rootPath, { withFileTypes: true });
+  const files: string[] = [];
+
+  for (const entry of entries) {
+    const entryPath = path.join(rootPath, entry.name);
+    if (entry.isDirectory()) {
+      files.push(...(await listJsonlFiles(entryPath)));
+    } else if (entry.isFile() && isJsonlFile(entryPath)) {
+      files.push(entryPath);
+    }
+  }
+
+  return files;
+}
+
+async function statIfExists(filePath: string): Promise<Awaited<ReturnType<typeof stat>> | undefined> {
+  try {
+    return await stat(filePath);
+  } catch (error) {
+    if (error instanceof Error && 'code' in error && error.code === 'ENOENT') {
+      return undefined;
+    }
+    throw error;
+  }
 }

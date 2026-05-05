@@ -16,7 +16,48 @@ export const pricingEntrySchema = z
 export type PricingEntry = z.infer<typeof pricingEntrySchema>;
 
 // [ASSUMPTION-RESOLVED: Use the 2026-05-05 Track-1 catalog snapshot for Milestone 1; pricing:check enforces freshness before publish.]
+// [NEEDS-INPUT: Should AIMeter detect Anthropic 1-hour cache writes separately from 5-minute cache writes?]
 export const DEFAULT_CATALOG = [
+  {
+    provider: 'anthropic',
+    model: 'claude-opus-4-7',
+    inputUsdPerMillion: 5,
+    outputUsdPerMillion: 25,
+    cacheReadUsdPerMillion: 0.5,
+    cacheWriteUsdPerMillion: 6.25,
+    verifiedAt: '2026-05-05',
+    sourceUrl: 'https://platform.claude.com/docs/en/docs/about-claude/pricing',
+  },
+  {
+    provider: 'anthropic',
+    model: 'claude-opus-4-6',
+    inputUsdPerMillion: 5,
+    outputUsdPerMillion: 25,
+    cacheReadUsdPerMillion: 0.5,
+    cacheWriteUsdPerMillion: 6.25,
+    verifiedAt: '2026-05-05',
+    sourceUrl: 'https://platform.claude.com/docs/en/docs/about-claude/pricing',
+  },
+  {
+    provider: 'anthropic',
+    model: 'claude-opus-4-5',
+    inputUsdPerMillion: 5,
+    outputUsdPerMillion: 25,
+    cacheReadUsdPerMillion: 0.5,
+    cacheWriteUsdPerMillion: 6.25,
+    verifiedAt: '2026-05-05',
+    sourceUrl: 'https://platform.claude.com/docs/en/docs/about-claude/pricing',
+  },
+  {
+    provider: 'anthropic',
+    model: 'claude-opus-4-1',
+    inputUsdPerMillion: 15,
+    outputUsdPerMillion: 75,
+    cacheReadUsdPerMillion: 1.5,
+    cacheWriteUsdPerMillion: 18.75,
+    verifiedAt: '2026-05-05',
+    sourceUrl: 'https://platform.claude.com/docs/en/docs/about-claude/pricing',
+  },
   {
     provider: 'anthropic',
     model: 'claude-sonnet-4',
@@ -26,6 +67,26 @@ export const DEFAULT_CATALOG = [
     cacheWriteUsdPerMillion: 3.75,
     verifiedAt: '2026-05-05',
     sourceUrl: 'https://docs.anthropic.com/en/docs/about-claude/pricing',
+  },
+  {
+    provider: 'anthropic',
+    model: 'claude-sonnet-4-6',
+    inputUsdPerMillion: 3,
+    outputUsdPerMillion: 15,
+    cacheReadUsdPerMillion: 0.3,
+    cacheWriteUsdPerMillion: 3.75,
+    verifiedAt: '2026-05-05',
+    sourceUrl: 'https://platform.claude.com/docs/en/docs/about-claude/pricing',
+  },
+  {
+    provider: 'anthropic',
+    model: 'claude-sonnet-4-5',
+    inputUsdPerMillion: 3,
+    outputUsdPerMillion: 15,
+    cacheReadUsdPerMillion: 0.3,
+    cacheWriteUsdPerMillion: 3.75,
+    verifiedAt: '2026-05-05',
+    sourceUrl: 'https://platform.claude.com/docs/en/docs/about-claude/pricing',
   },
   {
     provider: 'anthropic',
@@ -40,12 +101,12 @@ export const DEFAULT_CATALOG = [
   {
     provider: 'anthropic',
     model: 'claude-haiku-4-5',
-    inputUsdPerMillion: 0.8,
-    outputUsdPerMillion: 4,
-    cacheReadUsdPerMillion: 0.08,
-    cacheWriteUsdPerMillion: 1,
+    inputUsdPerMillion: 1,
+    outputUsdPerMillion: 5,
+    cacheReadUsdPerMillion: 0.1,
+    cacheWriteUsdPerMillion: 1.25,
     verifiedAt: '2026-05-05',
-    sourceUrl: 'https://docs.anthropic.com/en/docs/about-claude/pricing',
+    sourceUrl: 'https://platform.claude.com/docs/en/docs/about-claude/pricing',
   },
   {
     provider: 'anthropic',

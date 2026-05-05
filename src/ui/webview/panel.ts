@@ -2,6 +2,7 @@ import { randomBytes } from 'node:crypto';
 import * as vscode from 'vscode';
 import type { Logger } from '../../lib/logger.js';
 import type { LocalEventStore } from '../../store/persistence.js';
+import { readSettings } from '../../settings/index.js';
 import type { DoctorResult } from '../doctor.js';
 import { readWindowData } from '../dashboard-data.js';
 import { fromWebviewSchema, type FromExtension, type WindowKey } from './messages.js';
@@ -49,7 +50,8 @@ export class AIMeterDashboardProvider implements vscode.WebviewViewProvider {
     this.pendingDoctorResult = undefined;
 
     try {
-      const message = await readWindowData(this.store, this.activeWindow);
+      const settings = readSettings();
+      const message = await readWindowData(this.store, this.activeWindow, new Date(), settings.billing);
       await this.postMessage(message);
     } catch (error) {
       this.logger.warn('webview', 'Failed to refresh dashboard', {
@@ -385,6 +387,7 @@ function getHtml(webview: vscode.Webview, extensionUri: vscode.Uri): string {
       tbody tr:last-child td { border-bottom: none; }
       .model-name     { font-weight: 500; font-size: 12px; }
       .model-provider { font-size: 10px; color: var(--vscode-descriptionForeground); }
+      tbody td:nth-child(2) { color: var(--vscode-descriptionForeground); font-size: 11px; }
 
       /* ── Session list ────────────────────────────────── */
       .session-list { display: grid; gap: 1px; }

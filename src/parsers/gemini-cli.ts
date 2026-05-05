@@ -67,14 +67,17 @@ export class GeminiCliParser implements JsonlParser {
             `${path.basename(sourceFile)}:${occurredAt}:${model}`;
         const sessionId = parsed.data.sessionId ?? parsed.data.session_id ?? path.basename(path.dirname(sourceFile));
 
+        const inputTokenTotal = usage.promptTokenCount;
+        const cacheReadTokens = usage.cachedContentTokenCount;
+
         const event = parsedUsageEventSchema.safeParse({
             agent: 'gemini-cli',
             upstreamId,
             sessionId,
             model,
-            inputTokens: usage.promptTokenCount,
+            inputTokens: subtractCachedInput(inputTokenTotal, cacheReadTokens),
             outputTokens: usage.candidatesTokenCount,
-            cacheReadTokens: usage.cachedContentTokenCount,
+            cacheReadTokens,
             cacheWriteTokens: 0,
             occurredAt,
             projectSlug: projectSlugFromSource(sourceFile, parsed.data.cwd),
@@ -86,4 +89,8 @@ export class GeminiCliParser implements JsonlParser {
 
         return { ok: true, event: event.data };
     }
+}
+
+function subtractCachedInput(inputTokenTotal: number, cacheReadTokens: number): number {
+    return Math.max(0, inputTokenTotal - cacheReadTokens);
 }

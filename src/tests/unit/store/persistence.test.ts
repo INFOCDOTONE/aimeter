@@ -34,6 +34,20 @@ describe('LocalEventStore', () => {
     await expect(store.getOffset('/tmp/session.jsonl')).resolves.toBe(42);
   });
 
+  it('clears offsets with stored events so existing logs can be re-imported', async () => {
+    const dir = await mkdtemp(path.join(os.tmpdir(), 'aimeter-store-'));
+    const store = new LocalEventStore(dir);
+    await store.init();
+
+    await store.appendParsedEvents([event('evt_clear')]);
+    await store.setOffset('/tmp/session.jsonl', 42);
+
+    await store.clear();
+
+    await expect(store.readAllEvents()).resolves.toEqual([]);
+    await expect(store.getOffset('/tmp/session.jsonl')).resolves.toBe(0);
+  });
+
   it('applies pricing overrides when appending new events', async () => {
     const dir = await mkdtemp(path.join(os.tmpdir(), 'aimeter-store-'));
     const store = new LocalEventStore(dir, {
@@ -50,6 +64,22 @@ describe('LocalEventStore', () => {
 
     expect(appended[0]?.pricingSnapshot.source).toBe('override');
     expect(appended[0]?.costConfidence).toBe('high');
+  });
+
+  it('excludes subscription-included events from today estimated cost summary', async () => {
+    const dir = await mkdtemp(path.join(os.tmpdir(), 'aimeter-store-'));
+    const store = new LocalEventStore(dir);
+    await store.init();
+
+    await store.appendParsedEvents([event('evt_subscription')]);
+
+    const summary = await store.readTodaySummary(new Date('2026-05-05T12:00:00.000Z'), {
+      agentOverrides: { 'claude-code': 'subscription-included' },
+      modelOverrides: {},
+    });
+
+    expect(summary.tokens).toBe(150);
+    expect(summary.costUsdEstimated).toBe(0);
   });
 });
 

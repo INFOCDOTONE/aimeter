@@ -1,9 +1,10 @@
-import { appendFile, mkdir, readFile, readdir, rm, stat } from 'node:fs/promises';
+import { appendFile, mkdir, readFile, readdir, rm, stat, unlink } from 'node:fs/promises';
 import path from 'node:path';
 import { ensureDir, readJsonFile, writeJsonFileAtomic } from '../lib/fs.js';
 import { createEventId, createInstallId } from '../lib/id.js';
 import { monthKey, startOfLocalDay } from '../lib/time.js';
 import type { ParsedUsageEvent } from '../parsers/types.js';
+import { billingBasisForEvent, DEFAULT_BILLING_OVERRIDES, type BillingOverrides } from '../pricing/billing.js';
 import { estimateCost, type PricingOverrides } from '../pricing/compute.js';
 import { migrateMeta } from './migrations.js';
 import {
@@ -93,6 +94,7 @@ export class LocalEventStore {
 
   public async readTodaySummary(
     now = new Date(),
+    billingOverrides: BillingOverrides = DEFAULT_BILLING_OVERRIDES,
   ): Promise<{ tokens: number; costUsdEstimated: number; costConfidence: 'high' | 'medium' | 'low' }> {
     type TodaySummary = { tokens: number; costUsdEstimated: number; costConfidence: 'high' | 'medium' | 'low' };
     const start = startOfLocalDay(now);
@@ -107,7 +109,9 @@ export class LocalEventStore {
             event.outputTokens +
             event.cacheReadTokens +
             event.cacheWriteTokens,
-          costUsdEstimated: summary.costUsdEstimated + event.costUsdEstimated,
+          costUsdEstimated:
+            summary.costUsdEstimated +
+            (billingBasisForEvent(event, billingOverrides) === 'api-metered' ? event.costUsdEstimated : 0),
           costConfidence: combineConfidence(summary.costConfidence, event.costConfidence),
         }),
         { tokens: 0, costUsdEstimated: 0, costConfidence: 'high' },
@@ -128,6 +132,7 @@ export class LocalEventStore {
   public async clear(): Promise<void> {
     await rm(this.eventsPath, { recursive: true, force: true });
     await ensureDir(this.eventsPath);
+    await removeIfExists(this.offsetsPath);
     this.ids.clear();
   }
 
@@ -175,6 +180,17 @@ export class LocalEventStore {
       recordedAt: new Date().toISOString(),
       schemaVersion: 1,
     });
+  }
+}
+
+async function removeIfExists(filePath: string): Promise<void> {
+  try {
+    await unlink(filePath);
+  } catch (error) {
+    if (error instanceof Error && 'code' in error && error.code === 'ENOENT') {
+      return;
+    }
+    throw error;
   }
 }
 

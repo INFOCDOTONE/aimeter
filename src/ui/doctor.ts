@@ -53,6 +53,19 @@ export async function runDoctor(options: {
             ? 'Bundled catalog entries are within the freshness window.'
             : 'Bundled catalog entries are older than 30 days; run pricing refresh before publish.',
     });
+    checks.push({
+        name: 'Billing basis',
+        severity: billingOverridesConfigured(settings.billing) ? 'ok' : 'warn',
+        message: billingOverridesConfigured(settings.billing)
+            ? 'Billing basis overrides are configured; subscription-included usage is separated from API estimates.'
+            : 'No billing basis overrides configured. AIMeter treats matched catalog usage as API-metered estimates by default.',
+    });
+    checks.push({
+        name: 'GitHub Copilot',
+        severity: 'warn',
+        message:
+            'GitHub Copilot does not expose a reliable local token usage log for AIMeter to parse. Track 1 can show this limitation, but cannot estimate Copilot tokens locally without a new trusted source.',
+    });
 
     await checkStorage(options.store, checks);
 
@@ -200,4 +213,8 @@ function catalogIsFresh(now = new Date()): boolean {
 
 function errorMessage(error: unknown): string {
     return error instanceof Error ? error.message : String(error);
+}
+
+function billingOverridesConfigured(settings: ReturnType<typeof readSettings>['billing']): boolean {
+    return Object.keys(settings.agentOverrides).length > 0 || Object.keys(settings.modelOverrides).length > 0;
 }

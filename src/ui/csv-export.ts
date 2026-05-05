@@ -1,5 +1,6 @@
 import { writeFile } from 'node:fs/promises';
 import * as vscode from 'vscode';
+import { readSettings } from '../settings/index.js';
 import type { LocalEventStore } from '../store/persistence.js';
 import { toCsv } from './csv-format.js';
 
@@ -15,7 +16,8 @@ export async function exportCsv(store: LocalEventStore): Promise<void> {
     }
 
     const events = await store.readAllEvents();
-    const csv = toCsv(events);
+    const settings = readSettings();
+    const csv = toCsv(events, settings.billing);
     await writeFile(uri.fsPath, csv, 'utf8');
     await vscode.window.showInformationMessage(`AIMeter exported ${events.length} events.`);
 }

@@ -2,7 +2,7 @@
   "name": "aimeter",
   "displayName": "INFOC ONE AIMeter",
   "description": "Meter every AI agent, in one place. Track Claude Code, Codex CLI, Gemini CLI token usage locally and privately.",
-  "version": "0.1.0",
+  "version": "0.1.2",
   "publisher": "infoc-one",
   "license": "MIT",
   "private": true,
@@ -150,6 +150,32 @@
           "type": "object",
           "default": {},
           "description": "Per-model estimated pricing overrides keyed by model id. Values use inputUsdPerMillion, outputUsdPerMillion, cacheReadUsdPerMillion, and cacheWriteUsdPerMillion."
+        },
+        "aimeter.billing.agentOverrides": {
+          "type": "object",
+          "default": {},
+          "description": "Override billing basis by agent id. Use subscription-included for usage covered by a plan such as Claude Max/Pro, api-metered for metered API usage, or unknown when billing cannot be inferred.",
+          "additionalProperties": {
+            "type": "string",
+            "enum": [
+              "api-metered",
+              "subscription-included",
+              "unknown"
+            ]
+          }
+        },
+        "aimeter.billing.modelOverrides": {
+          "type": "object",
+          "default": {},
+          "description": "Override billing basis by model id. Model overrides take precedence over agent overrides.",
+          "additionalProperties": {
+            "type": "string",
+            "enum": [
+              "api-metered",
+              "subscription-included",
+              "unknown"
+            ]
+          }
         },
         "aimeter.retention.days": {
           "type": "number",

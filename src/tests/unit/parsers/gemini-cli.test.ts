@@ -20,7 +20,7 @@ describe('GeminiCliParser', () => {
             upstreamId: 'gemini_evt_001',
             sessionId: 'gemini-session-alpha',
             model: 'gemini-2.5-pro',
-            inputTokens: 1300,
+            inputTokens: 1230,
             outputTokens: 360,
             cacheReadTokens: 70,
             cacheWriteTokens: 0,
@@ -41,7 +41,7 @@ describe('GeminiCliParser', () => {
 
         expect(parsed.event.upstreamId).toBe('gemini_evt_002');
         expect(parsed.event.model).toBe('gemini-2.5-flash');
-        expect(parsed.event.inputTokens).toBe(500);
+        expect(parsed.event.inputTokens).toBe(475);
         expect(parsed.event.outputTokens).toBe(120);
         expect(parsed.event.cacheReadTokens).toBe(25);
         expect(parsed.event.projectSlug).toBe('beta');

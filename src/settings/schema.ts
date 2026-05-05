@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { billingOverridesSchema } from '../pricing/billing.js';
 
 export const settingsSchema = z
   .object({
@@ -36,6 +37,7 @@ export const settingsSchema = z
           .strict(),
       ),
     }),
+    billing: billingOverridesSchema,
     network: z.object({
       updateCheck: z.boolean(),
     }),

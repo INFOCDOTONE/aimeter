@@ -1,3 +1,4 @@
+import { billingBasisForEvent, DEFAULT_BILLING_OVERRIDES, type BillingOverrides } from '../pricing/billing.js';
 import type { StoredEvent } from '../store/schema.js';
 
 const COLUMNS = [
@@ -11,11 +12,12 @@ const COLUMNS = [
     'cost_usd_estimated',
     'confidence',
     'pricing_source',
+    'billing_basis',
     'project',
     'session_id',
 ] as const;
 
-export function toCsv(events: StoredEvent[]): string {
+export function toCsv(events: StoredEvent[], billingOverrides: BillingOverrides = DEFAULT_BILLING_OVERRIDES): string {
     const rows = events
         .slice()
         .sort((left, right) => left.occurredAt.localeCompare(right.occurredAt))
@@ -31,6 +33,7 @@ export function toCsv(events: StoredEvent[]): string {
                 event.costUsdEstimated,
                 event.costConfidence,
                 event.pricingSnapshot.source,
+                billingBasisForEvent(event, billingOverrides),
                 event.projectSlug,
                 event.sessionId,
             ].map((value) => escapeCsv(String(value))),

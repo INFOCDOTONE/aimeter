@@ -1,5 +1,6 @@
 import { startOfLocalDay } from '../lib/time.js';
 import type { Agent } from '../parsers/types.js';
+import { billingBasisForEvent, DEFAULT_BILLING_OVERRIDES, type BillingBasis, type BillingOverrides } from '../pricing/billing.js';
 import type { LocalEventStore } from '../store/persistence.js';
 import type { StoredEvent } from '../store/schema.js';
 import type {
@@ -18,10 +19,11 @@ export async function readWindowData(
     store: LocalEventStore,
     window: WindowKey,
     now = new Date(),
+    billingOverrides: BillingOverrides = DEFAULT_BILLING_OVERRIDES,
 ): Promise<WindowData> {
     const range = getWindowRange(window, now);
     const events = await store.readEventsBetween(range.from, range.to);
-    return buildWindowData(events, window, range.from, range.to, now);
+    return buildWindowData(events, window, range.from, range.to, now, billingOverrides);
 }
 
 export function buildWindowData(
@@ -30,12 +32,13 @@ export function buildWindowData(
     from: Date,
     to: Date,
     now = new Date(),
+    billingOverrides: BillingOverrides = DEFAULT_BILLING_OVERRIDES,
 ): WindowData {
     const sortedEvents = [...events].sort(
         (left, right) => new Date(right.occurredAt).getTime() - new Date(left.occurredAt).getTime(),
     );
-    const totals = summarizeEvents(events);
-    const daily = buildDailyUsage(events, from, to);
+    const totals = summarizeEvents(events, billingOverrides);
+    const daily = buildDailyUsage(events, from, to, billingOverrides);
 
     return {
         type: 'window-data',
@@ -46,9 +49,9 @@ export function buildWindowData(
             generatedAt: now.toISOString(),
             totals,
             daily,
-            byAgent: buildBreakdowns(events, 'agent'),
-            byModel: buildBreakdowns(events, 'model'),
-            recentSessions: buildRecentSessions(sortedEvents),
+            byAgent: buildBreakdowns(events, 'agent', billingOverrides),
+            byModel: buildBreakdowns(events, 'model', billingOverrides),
+            recentSessions: buildRecentSessions(sortedEvents, billingOverrides),
             hasEvents: events.length > 0,
         },
     };
@@ -63,7 +66,7 @@ function getWindowRange(window: WindowKey, now: Date): { from: Date; to: Date } 
     };
 }
 
-function buildDailyUsage(events: StoredEvent[], from: Date, to: Date): DailyUsage[] {
+function buildDailyUsage(events: StoredEvent[], from: Date, to: Date, billingOverrides: BillingOverrides): DailyUsage[] {
     const days: DailyUsage[] = [];
     for (let cursor = from.getTime(); cursor < to.getTime(); cursor += DAY_MS) {
         const date = new Date(cursor).toISOString().slice(0, 10);
@@ -82,14 +85,14 @@ function buildDailyUsage(events: StoredEvent[], from: Date, to: Date): DailyUsag
             continue;
         }
         day.tokens += totalTokens(event);
-        day.costUsdEstimated = roundUsd(day.costUsdEstimated + event.costUsdEstimated);
+        day.costUsdEstimated = roundUsd(day.costUsdEstimated + displayCost(event, billingOverrides));
         day.eventCount += 1;
     }
 
     return days;
 }
 
-function buildBreakdowns(events: StoredEvent[], key: 'agent' | 'model'): UsageBreakdown[] {
+function buildBreakdowns(events: StoredEvent[], key: 'agent' | 'model', billingOverrides: BillingOverrides): UsageBreakdown[] {
     const groups = new Map<string, StoredEvent[]>();
     for (const event of events) {
         const groupKey = key === 'agent' ? event.agent : event.model;
@@ -99,11 +102,16 @@ function buildBreakdowns(events: StoredEvent[], key: 'agent' | 'model'): UsageBr
     }
 
     return [...groups.entries()]
-        .map(([id, group]) => ({ id, label: labelForBreakdown(id), ...summarizeEvents(group) }))
+        .map(([id, group]) => ({
+            id,
+            label: labelForBreakdown(id),
+            billingBasis: dominantBillingBasis(group, billingOverrides),
+            ...summarizeEvents(group, billingOverrides),
+        }))
         .sort((left, right) => right.tokens - left.tokens || left.label.localeCompare(right.label));
 }
 
-function buildRecentSessions(events: StoredEvent[]): UsageSession[] {
+function buildRecentSessions(events: StoredEvent[], billingOverrides: BillingOverrides): UsageSession[] {
     const groups = new Map<string, StoredEvent[]>();
     for (const event of events) {
         const group = groups.get(event.sessionId) ?? [];
@@ -124,14 +132,15 @@ function buildRecentSessions(events: StoredEvent[]): UsageSession[] {
                 latestAt: latest.occurredAt,
                 agents,
                 models,
-                ...summarizeEvents(group),
+                billingBasis: dominantBillingBasis(group, billingOverrides),
+                ...summarizeEvents(group, billingOverrides),
             };
         })
         .sort((left, right) => new Date(right.latestAt).getTime() - new Date(left.latestAt).getTime())
         .slice(0, 50);
 }
 
-function summarizeEvents(events: StoredEvent[]): UsageTotals {
+function summarizeEvents(events: StoredEvent[], billingOverrides: BillingOverrides): UsageTotals {
     const initialSummary: UsageTotals = {
         tokens: 0,
         inputTokens: 0,
@@ -141,21 +150,46 @@ function summarizeEvents(events: StoredEvent[]): UsageTotals {
         costUsdEstimated: 0,
         eventCount: 0,
         costConfidence: 'high',
+        billing: {
+            apiMeteredTokens: 0,
+            subscriptionIncludedTokens: 0,
+            unknownTokens: 0,
+            apiMeteredCostUsdEstimated: 0,
+            subscriptionIncludedCostUsdEstimated: 0,
+            unknownCostUsdEstimated: 0,
+        },
     };
 
-    return events.reduce<UsageTotals>(
-        (summary, event) => ({
-            tokens: summary.tokens + totalTokens(event),
-            inputTokens: summary.inputTokens + event.inputTokens,
-            outputTokens: summary.outputTokens + event.outputTokens,
-            cacheReadTokens: summary.cacheReadTokens + event.cacheReadTokens,
-            cacheWriteTokens: summary.cacheWriteTokens + event.cacheWriteTokens,
-            costUsdEstimated: roundUsd(summary.costUsdEstimated + event.costUsdEstimated),
-            eventCount: summary.eventCount + 1,
-            costConfidence: combineConfidence(summary.costConfidence, event.costConfidence),
-        }),
-        initialSummary,
-    );
+    return events.reduce<UsageTotals>((summary, event) => addEventToSummary(summary, event, billingOverrides), initialSummary);
+}
+
+function addEventToSummary(summary: UsageTotals, event: StoredEvent, billingOverrides: BillingOverrides): UsageTotals {
+    const tokens = totalTokens(event);
+    const basis = billingBasisForEvent(event, billingOverrides);
+    const billing = { ...summary.billing };
+
+    if (basis === 'api-metered') {
+        billing.apiMeteredTokens += tokens;
+        billing.apiMeteredCostUsdEstimated = roundUsd(billing.apiMeteredCostUsdEstimated + event.costUsdEstimated);
+    } else if (basis === 'subscription-included') {
+        billing.subscriptionIncludedTokens += tokens;
+        billing.subscriptionIncludedCostUsdEstimated = roundUsd(billing.subscriptionIncludedCostUsdEstimated + event.costUsdEstimated);
+    } else {
+        billing.unknownTokens += tokens;
+        billing.unknownCostUsdEstimated = roundUsd(billing.unknownCostUsdEstimated + event.costUsdEstimated);
+    }
+
+    return {
+        tokens: summary.tokens + tokens,
+        inputTokens: summary.inputTokens + event.inputTokens,
+        outputTokens: summary.outputTokens + event.outputTokens,
+        cacheReadTokens: summary.cacheReadTokens + event.cacheReadTokens,
+        cacheWriteTokens: summary.cacheWriteTokens + event.cacheWriteTokens,
+        costUsdEstimated: roundUsd(summary.costUsdEstimated + displayCost(event, billingOverrides)),
+        eventCount: summary.eventCount + 1,
+        costConfidence: combineConfidence(summary.costConfidence, event.costConfidence),
+        billing,
+    };
 }
 
 function totalTokens(event: StoredEvent): number {
@@ -170,6 +204,28 @@ function combineConfidence(left: CostConfidence, right: CostConfidence): CostCon
         return 'medium';
     }
     return 'high';
+}
+
+function displayCost(event: StoredEvent, billingOverrides: BillingOverrides): number {
+    return billingBasisForEvent(event, billingOverrides) === 'api-metered' ? event.costUsdEstimated : 0;
+}
+
+function dominantBillingBasis(events: StoredEvent[], billingOverrides: BillingOverrides): BillingBasis {
+    const counts: Record<BillingBasis, number> = {
+        'api-metered': 0,
+        'subscription-included': 0,
+        unknown: 0,
+    };
+    for (const event of events) {
+        counts[billingBasisForEvent(event, billingOverrides)] += totalTokens(event);
+    }
+    if (counts.unknown > 0 && counts.unknown >= counts['api-metered'] && counts.unknown >= counts['subscription-included']) {
+        return 'unknown';
+    }
+    if (counts['subscription-included'] > 0 && counts['subscription-included'] >= counts['api-metered']) {
+        return 'subscription-included';
+    }
+    return 'api-metered';
 }
 
 function labelForBreakdown(id: string): string {

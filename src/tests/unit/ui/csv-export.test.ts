@@ -32,8 +32,8 @@ describe('toCsv', () => {
         ]);
 
         expect(csv).toBe(
-            'timestamp,agent,model,input,output,cache_r,cache_w,cost_usd_estimated,confidence,pricing_source,project,session_id\n' +
-            '2026-05-05T08:00:00.000Z,codex-cli,gpt-5,100,50,25,0,0.00125,high,catalog,project,"session,alpha"\n',
+            'timestamp,agent,model,input,output,cache_r,cache_w,cost_usd_estimated,confidence,pricing_source,billing_basis,project,session_id\n' +
+            '2026-05-05T08:00:00.000Z,codex-cli,gpt-5,100,50,25,0,0.00125,high,catalog,api-metered,project,"session,alpha"\n',
         );
     });
 });

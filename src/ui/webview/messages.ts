@@ -1,10 +1,23 @@
 import { z } from 'zod';
+import { billingBasisSchema } from '../../pricing/billing.js';
 
 export const windowKeySchema = z.enum(['today', '7d', '30d']);
 export type WindowKey = z.infer<typeof windowKeySchema>;
 
 export const costConfidenceSchema = z.enum(['high', 'medium', 'low']);
 export type CostConfidence = z.infer<typeof costConfidenceSchema>;
+
+export const billingUsageSchema = z
+    .object({
+        apiMeteredTokens: z.number().int().nonnegative(),
+        subscriptionIncludedTokens: z.number().int().nonnegative(),
+        unknownTokens: z.number().int().nonnegative(),
+        apiMeteredCostUsdEstimated: z.number().nonnegative(),
+        subscriptionIncludedCostUsdEstimated: z.number().nonnegative(),
+        unknownCostUsdEstimated: z.number().nonnegative(),
+    })
+    .strict();
+export type BillingUsage = z.infer<typeof billingUsageSchema>;
 
 export const usageTotalsSchema = z
     .object({
@@ -16,6 +29,7 @@ export const usageTotalsSchema = z
         costUsdEstimated: z.number().nonnegative(),
         eventCount: z.number().int().nonnegative(),
         costConfidence: costConfidenceSchema,
+        billing: billingUsageSchema,
     })
     .strict();
 export type UsageTotals = z.infer<typeof usageTotalsSchema>;
@@ -34,6 +48,7 @@ export const usageBreakdownSchema = usageTotalsSchema
     .extend({
         id: z.string().min(1),
         label: z.string().min(1),
+        billingBasis: billingBasisSchema,
     })
     .strict();
 export type UsageBreakdown = z.infer<typeof usageBreakdownSchema>;
@@ -45,6 +60,7 @@ export const usageSessionSchema = usageTotalsSchema
         latestAt: z.string().datetime(),
         agents: z.array(z.string().min(1)),
         models: z.array(z.string().min(1)),
+        billingBasis: billingBasisSchema,
     })
     .strict();
 export type UsageSession = z.infer<typeof usageSessionSchema>;

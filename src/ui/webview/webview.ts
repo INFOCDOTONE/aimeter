@@ -1,3 +1,4 @@
+import type { BillingBasis } from '../../pricing/billing.js';
 import { fromExtensionSchema, type DoctorResult, type WindowDataPayload, type WindowKey } from './messages.js';
 
 declare const acquireVsCodeApi: () => {
@@ -101,11 +102,11 @@ function renderHeroSection(data: WindowDataPayload): HTMLElement {
 
     // Cost card
     const costCard = div('metric-card');
-    costCard.append(p('metric-label', 'Estimated cost'));
+    costCard.append(p('metric-label', 'Estimated API cost'));
     const costVal = div('metric-value mono');
     costVal.innerHTML = `${confDot(totals.costConfidence)}${fmtUsd(totals.costUsdEstimated)}`;
-    const rate = totals.tokens > 0
-        ? `$${((totals.costUsdEstimated / totals.tokens) * 1_000_000).toFixed(2)}/1M tokens`
+    const rate = totals.billing.apiMeteredTokens > 0
+        ? `$${((totals.costUsdEstimated / totals.billing.apiMeteredTokens) * 1_000_000).toFixed(2)}/1M API tokens`
         : `${totals.costConfidence} confidence`;
     costCard.append(costVal, p('metric-detail', rate));
 
@@ -117,6 +118,8 @@ function renderHeroSection(data: WindowDataPayload): HTMLElement {
         metaItem(String(totals.eventCount), 'events'),
         metaItem(String(data.recentSessions.length), 'sessions'),
         metaItem(fmtTokens(totals.cacheReadTokens), 'cache hits'),
+        metaItem(fmtTokens(totals.billing.subscriptionIncludedTokens), 'plan tokens'),
+        metaItem(fmtTokens(totals.billing.unknownTokens), 'unknown billing'),
     );
 
     const section = div();
@@ -312,7 +315,7 @@ function renderModelPanel(data: WindowDataPayload): HTMLElement {
     const table = el<HTMLTableElement>('table');
     const thead = el<HTMLTableSectionElement>('thead');
     const hrow = el<HTMLTableRowElement>('tr');
-    hrow.append(th('Model'), th('Tokens'), th('Cost'), th('Events'));
+    hrow.append(th('Model'), th('Billing'), th('Tokens'), th('Cost'), th('Events'));
     thead.append(hrow);
 
     const tbody = el<HTMLTableSectionElement>('tbody');
@@ -330,6 +333,7 @@ function renderModelPanel(data: WindowDataPayload): HTMLElement {
 
         row.append(
             nameTd,
+            td(billingBasisLabel(model.billingBasis)),
             td(fmtTokensCompact(model.tokens)),
             costTd,
             td(String(model.eventCount)),
@@ -376,7 +380,7 @@ function renderSessionsPanel(data: WindowDataPayload): HTMLElement {
         );
 
         const tokens = div('session-tokens');
-        tokens.innerHTML = `${fmtTokens(session.tokens)} tokens · ${confDot(session.costConfidence)}${fmtUsd(session.costUsdEstimated)} est`;
+        tokens.innerHTML = `${fmtTokens(session.tokens)} tokens · ${billingBasisLabel(session.billingBasis)} · ${confDot(session.costConfidence)}${fmtUsd(session.costUsdEstimated)} API est`;
 
         item.append(project, meta, tokens);
         list.append(item);
@@ -401,6 +405,7 @@ function renderEmpty(): HTMLElement {
         { name: 'Claude Code', path: '~/.claude/projects' },
         { name: 'Codex CLI',   path: '~/.codex/sessions' },
         { name: 'Gemini CLI',  path: '~/.gemini/sessions' },
+        { name: 'GitHub Copilot', path: 'No local token log available' },
     ]) {
         const li = el<HTMLLIElement>('li', 'watcher-row');
         li.append(span('watcher-name', name));
@@ -541,6 +546,12 @@ function agentShort(id: string): string {
     if (id === 'codex-cli')   return 'Codex';
     if (id === 'gemini-cli')  return 'Gemini';
     return id;
+}
+
+function billingBasisLabel(basis: BillingBasis): string {
+    if (basis === 'api-metered') return 'API metered';
+    if (basis === 'subscription-included') return 'Plan included';
+    return 'Unknown';
 }
 
 // ─── Confidence dot ────────────────────────────────────────────────────────

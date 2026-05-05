@@ -29,6 +29,10 @@ export function readSettings(): AIMeterSettings {
     pricing: {
       overrides: config.get('pricing.overrides', {}),
     },
+    billing: {
+      agentOverrides: config.get('billing.agentOverrides', {}),
+      modelOverrides: config.get('billing.modelOverrides', {}),
+    },
     network: {
       updateCheck: config.get('network.updateCheck', false),
     },

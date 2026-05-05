@@ -12,12 +12,14 @@ export function registerCommands(options: {
   store: LocalEventStore;
   statusBar: AIMeterStatusBar;
   dashboardProvider: AIMeterDashboardProvider;
+  scanUsageLogs: () => Promise<void>;
 }): void {
   options.context.subscriptions.push(
     vscode.commands.registerCommand('aimeter.openDashboard', () => {
       void vscode.commands.executeCommand('workbench.view.extension.aimeter');
     }),
     vscode.commands.registerCommand('aimeter.refresh', async () => {
+      await options.scanUsageLogs();
       await options.statusBar.refresh();
       await options.dashboardProvider.refresh();
     }),
@@ -32,7 +34,8 @@ export function registerCommands(options: {
       );
       if (answer === 'Clear data') {
         await options.store.clear();
-        options.statusBar.showNoData();
+        await options.scanUsageLogs();
+        await options.statusBar.refresh();
         await options.dashboardProvider.refresh();
       }
     }),

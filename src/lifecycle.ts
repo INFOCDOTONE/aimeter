@@ -30,8 +30,20 @@ export async function startAIMeter(context: vscode.ExtensionContext): Promise<vo
     logger,
     store,
   });
+  const usageWatchers: UsageWatcher[] = [];
 
-  registerCommands({ context, logger, store, statusBar, dashboardProvider });
+  registerCommands({
+    context,
+    logger,
+    store,
+    statusBar,
+    dashboardProvider,
+    scanUsageLogs: async () => {
+      for (const watcher of usageWatchers) {
+        await watcher.scanNow();
+      }
+    },
+  });
   context.subscriptions.push(statusBar);
   context.subscriptions.push(output);
   context.subscriptions.push(
@@ -74,6 +86,7 @@ export async function startAIMeter(context: vscode.ExtensionContext): Promise<vo
         }
       },
     });
+    usageWatchers.push(watcher);
     watcher.start();
     context.subscriptions.push({
       dispose: () => {
