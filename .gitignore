@@ -17,3 +17,7 @@ Thumbs.db
 
 .pnpm-store/
 .gstack/
+.codex/
+.github/skills/
+*.csv
+aimeter-export-*.csv
