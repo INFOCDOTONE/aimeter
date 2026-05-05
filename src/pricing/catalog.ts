@@ -15,6 +15,7 @@ export const pricingEntrySchema = z
 
 export type PricingEntry = z.infer<typeof pricingEntrySchema>;
 
+// [ASSUMPTION-RESOLVED: Use the 2026-05-05 Track-1 catalog snapshot for Milestone 1; pricing:check enforces freshness before publish.]
 export const DEFAULT_CATALOG = [
   {
     provider: 'anthropic',
