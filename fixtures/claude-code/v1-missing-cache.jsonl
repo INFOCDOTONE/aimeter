@@ -1,0 +1,1 @@
+{"uuid":"evt_003","sessionId":"session-gamma","timestamp":"2026-05-05T10:00:00.000Z","cwd":"/home/dev/gamma","message":{"id":"msg_003","model":"claude-3-5-haiku-20241022","usage":{"input_tokens":500,"output_tokens":125},"content":"forbidden completion text"}}

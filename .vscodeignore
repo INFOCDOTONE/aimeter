@@ -1,0 +1,11 @@
+src/**
+fixtures/**
+scripts/**
+coverage/**
+.vscode-test/**
+*.tsbuildinfo
+tsconfig*.json
+vitest.config.ts
+eslint.config.js
+prettier.config.mjs
+pnpm-lock.yaml

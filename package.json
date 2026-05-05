@@ -1,0 +1,229 @@
+{
+  "name": "aimeter",
+  "displayName": "INFOC ONE AIMeter",
+  "description": "Meter every AI agent, in one place. Track Claude Code, Codex CLI, Gemini CLI token usage locally and privately.",
+  "version": "0.1.0",
+  "publisher": "infoc-one",
+  "license": "MIT",
+  "private": true,
+  "icon": "media/icon.png",
+  "engines": {
+    "vscode": "^1.95.0"
+  },
+  "categories": [
+    "Other",
+    "Visualization"
+  ],
+  "keywords": [
+    "ai",
+    "tokens",
+    "cost",
+    "claude",
+    "codex",
+    "gemini",
+    "finops",
+    "usage",
+    "metering"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/infoc-one/aimeter-infoc-one"
+  },
+  "bugs": {
+    "url": "https://github.com/infoc-one/aimeter-infoc-one/issues"
+  },
+  "homepage": "https://aimeter.infoc.one",
+  "main": "./dist/extension.js",
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "contributes": {
+    "commands": [
+      {
+        "command": "aimeter.openDashboard",
+        "title": "AIMeter: Open Dashboard"
+      },
+      {
+        "command": "aimeter.exportCsv",
+        "title": "AIMeter: Export CSV..."
+      },
+      {
+        "command": "aimeter.refresh",
+        "title": "AIMeter: Refresh Now"
+      },
+      {
+        "command": "aimeter.clearData",
+        "title": "AIMeter: Clear All Stored Data..."
+      },
+      {
+        "command": "aimeter.openLogs",
+        "title": "AIMeter: Show Output Logs"
+      },
+      {
+        "command": "aimeter.runDoctor",
+        "title": "AIMeter: Run Doctor (Diagnostics)"
+      }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "aimeter",
+          "title": "AIMeter",
+          "icon": "media/icon-dark.svg"
+        }
+      ]
+    },
+    "views": {
+      "aimeter": [
+        {
+          "id": "aimeter.dashboard",
+          "name": "Dashboard",
+          "type": "webview"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "AIMeter",
+      "properties": {
+        "aimeter.statusBar.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show AIMeter in the status bar."
+        },
+        "aimeter.statusBar.format": {
+          "type": "string",
+          "enum": [
+            "cost-today",
+            "tokens-today",
+            "both"
+          ],
+          "default": "cost-today",
+          "description": "What to show in the status bar."
+        },
+        "aimeter.refreshIntervalSec": {
+          "type": "number",
+          "default": 30,
+          "minimum": 5,
+          "maximum": 600,
+          "description": "How often the watcher debounces and reads new lines, in seconds."
+        },
+        "aimeter.parsers.claudeCode.enabled": {
+          "type": "boolean",
+          "default": true
+        },
+        "aimeter.parsers.claudeCode.paths": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [],
+          "description": "Override default ~/.claude/projects path. Empty = use default."
+        },
+        "aimeter.parsers.codexCli.enabled": {
+          "type": "boolean",
+          "default": true
+        },
+        "aimeter.parsers.codexCli.paths": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": []
+        },
+        "aimeter.parsers.geminiCli.enabled": {
+          "type": "boolean",
+          "default": true
+        },
+        "aimeter.parsers.geminiCli.paths": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": []
+        },
+        "aimeter.pricing.overrides": {
+          "type": "object",
+          "default": {},
+          "description": "Per-model rate overrides keyed by model id."
+        },
+        "aimeter.retention.days": {
+          "type": "number",
+          "default": 365,
+          "minimum": 7,
+          "maximum": 3650,
+          "description": "Days of event history to keep locally before pruning."
+        },
+        "aimeter.network.updateCheck": {
+          "type": "boolean",
+          "default": false,
+          "description": "Allow AIMeter to make ONE outbound request per day to check for catalog updates. OFF by default."
+        }
+      }
+    },
+    "menus": {
+      "view/title": [
+        {
+          "command": "aimeter.refresh",
+          "when": "view == aimeter.dashboard",
+          "group": "navigation"
+        },
+        {
+          "command": "aimeter.exportCsv",
+          "when": "view == aimeter.dashboard",
+          "group": "navigation"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "dev": "node scripts/build.mjs --watch",
+    "build": "node scripts/build.mjs",
+    "package": "pnpm build && vsce package --no-dependencies -o dist/aimeter-${npm_package_version}.vsix",
+    "publish": "vsce publish --no-dependencies",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write .",
+    "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.webview.json",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:cov": "vitest run --coverage",
+    "test:vscode": "node scripts/test-vscode-placeholder.mjs",
+    "license:check": "node scripts/check-licenses.js",
+    "pricing:check": "tsx scripts/check-pricing-freshness.ts",
+    "prepare": "husky"
+  },
+  "dependencies": {
+    "chokidar": "4.0.3",
+    "date-fns": "4.1.0",
+    "zod": "3.24.1"
+  },
+  "devDependencies": {
+    "@types/node": "22.10.2",
+    "@types/vscode": "1.95.0",
+    "@typescript-eslint/eslint-plugin": "8.19.0",
+    "@typescript-eslint/parser": "8.19.0",
+    "@vitest/coverage-v8": "2.1.8",
+    "@vscode/test-cli": "0.0.10",
+    "@vscode/test-electron": "2.4.1",
+    "@vscode/vsce": "3.2.1",
+    "esbuild": "0.24.2",
+    "eslint": "9.17.0",
+    "husky": "9.1.7",
+    "license-checker": "25.0.1",
+    "lint-staged": "15.3.0",
+    "prettier": "3.4.2",
+    "tsx": "4.19.2",
+    "typescript": "5.7.2",
+    "vitest": "2.1.8"
+  },
+  "packageManager": "pnpm@9.15.0",
+  "lint-staged": {
+    "*.{ts,tsx}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{md,json,css}": [
+      "prettier --write"
+    ]
+  }
+}

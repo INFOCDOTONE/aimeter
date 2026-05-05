@@ -1,0 +1,33 @@
+import { z } from 'zod';
+
+export const settingsSchema = z
+  .object({
+    statusBar: z.object({
+      enabled: z.boolean(),
+      format: z.enum(['cost-today', 'tokens-today', 'both']),
+    }),
+    refreshIntervalSec: z.number().min(5).max(600),
+    parsers: z.object({
+      claudeCode: z.object({
+        enabled: z.boolean(),
+        paths: z.array(z.string()),
+      }),
+      codexCli: z.object({
+        enabled: z.boolean(),
+        paths: z.array(z.string()),
+      }),
+      geminiCli: z.object({
+        enabled: z.boolean(),
+        paths: z.array(z.string()),
+      }),
+    }),
+    retention: z.object({
+      days: z.number().min(7).max(3650),
+    }),
+    network: z.object({
+      updateCheck: z.boolean(),
+    }),
+  })
+  .strict();
+
+export type AIMeterSettings = z.infer<typeof settingsSchema>;
