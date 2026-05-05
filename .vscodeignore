@@ -1,6 +1,7 @@
 .github/**
 .husky/**
 .vscode/**
+.gstack/**
 _track2-saas/**
 docs/**
 fixtures/**
