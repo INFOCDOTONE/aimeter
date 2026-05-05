@@ -187,7 +187,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:cov": "vitest run --coverage",
-    "test:vscode": "node scripts/test-vscode-placeholder.mjs",
+    "test:vscode": "node scripts/test-vscode.mjs",
     "license:check": "node scripts/check-licenses.js",
     "pricing:check": "tsx scripts/check-pricing-freshness.ts",
     "prepare": "husky"

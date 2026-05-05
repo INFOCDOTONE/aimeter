@@ -75,6 +75,16 @@ export class LocalEventStore {
     return events;
   }
 
+  public async readEventsBetween(from: Date, to: Date): Promise<StoredEvent[]> {
+    const fromTime = from.getTime();
+    const toTime = to.getTime();
+    const events = await this.readAllEvents();
+    return events.filter((event) => {
+      const occurredAt = new Date(event.occurredAt).getTime();
+      return occurredAt >= fromTime && occurredAt < toTime;
+    });
+  }
+
   public async readTodaySummary(now = new Date()): Promise<{ tokens: number; costUsdEstimated: number }> {
     const start = startOfLocalDay(now);
     const events = await this.readAllEvents();

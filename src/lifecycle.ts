@@ -17,14 +17,19 @@ export async function startAIMeter(context: vscode.ExtensionContext): Promise<vo
 
   const statusBar = new AIMeterStatusBar(store);
   statusBar.showNoData();
+  const dashboardProvider = new AIMeterDashboardProvider({
+    extensionUri: context.extensionUri,
+    logger,
+    store,
+  });
 
-  registerCommands({ context, logger, store, statusBar });
+  registerCommands({ context, logger, store, statusBar, dashboardProvider });
   context.subscriptions.push(statusBar);
   context.subscriptions.push(output);
   context.subscriptions.push(
     vscode.window.registerWebviewViewProvider(
       AIMeterDashboardProvider.viewType,
-      new AIMeterDashboardProvider(),
+      dashboardProvider,
     ),
   );
 
@@ -39,6 +44,7 @@ export async function startAIMeter(context: vscode.ExtensionContext): Promise<vo
         const appended = await store.appendParsedEvents(events);
         if (appended.length > 0) {
           await statusBar.refresh();
+          await dashboardProvider.refresh();
         }
       },
     });

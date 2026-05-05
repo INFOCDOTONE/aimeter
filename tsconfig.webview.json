@@ -3,9 +3,15 @@
   "compilerOptions": {
     "module": "ESNext",
     "moduleResolution": "Bundler",
-    "lib": ["ES2022", "DOM"],
+    "lib": [
+      "ES2022",
+      "DOM"
+    ],
     "types": []
   },
-  "include": ["src/ui/webview/**/*.ts"],
+  "include": [
+    "src/ui/webview/webview.ts",
+    "src/ui/webview/messages.ts"
+  ],
   "exclude": []
 }

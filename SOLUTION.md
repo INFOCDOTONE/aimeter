@@ -1,9 +1,20 @@
-# Infoc One AIMeter — Solution Spec
+# INFOC ONE AIMeter — VS Code Extension Solution Spec (Track 1)
 
-> **Autopilot-grade build document.** Hand this to Claude Code in a fresh VS Code workspace alongside `HANDOVER.md`. No further questions should be required to begin Phase 0 or Phase 1 work. Every assumption is flagged `[ASSUMPTION: …]` — override before running.
+> **Autopilot-grade build document for the VS Code extension.** Hand this to Claude Code in a fresh VS Code workspace alongside `HANDOVER.md`, `CLAUDE.md`, and `DECISIONS.md`. Every assumption is flagged `[ASSUMPTION: …]` — override before running.
 
-**Brand:** Infoc (company) · One (product group) · AIMeter (this product)
-**Domain:** `infoc.one`
+> **Authoritative document set (and ONLY these):** `CLAUDE.md`, `HANDOVER.md`, `SOLUTION.md` (this file), `DECISIONS.md`, `README.md`. The `_track2-saas/` folder contains archived SaaS docs for the future product — IGNORE during Track 1 build. Files outside this set are non-authoritative.
+
+**Position:** Free VS Code extension that tracks AI coding-agent token usage locally for individual developers. Track 1 of a two-track plan. Track 2 (hosted SaaS for team leads) is deferred until Track 1 shows traction.
+
+**Brand:** Infoc (company) · INFOC ONE (platform family) · AIMeter (this product)
+**Wordmark:** `AIMeter` (camelCase)
+**Marketplace publisher ID:** `infoc-one` (used in extension URLs; cannot be renamed once created)
+**Marketplace publisher display name:** `INFOC ONE` (shown on listing; can be edited)
+**Marketplace extension name:** `aimeter`
+**Marketplace extension ID:** `infoc-one.aimeter`
+**Repo:** `aimeter-infoc-one/`
+**Marketing page:** `aimeter.infoc.one` (download + info)
+**Pricing:** **Free forever. No Pro tier. No payment logic in v1.**
 **Tagline:** *Meter every AI agent, in one place.*
 
 ---
@@ -14,64 +25,64 @@
 2. [Conventions and naming](#2-conventions-and-naming)
 3. [Tech stack with pinned versions](#3-tech-stack-with-pinned-versions)
 4. [Repository layout](#4-repository-layout)
-5. [Environment variables](#5-environment-variables)
-6. [Database schema](#6-database-schema)
-7. [API contracts](#7-api-contracts)
-8. [Authentication](#8-authentication)
-9. [CLI agent specification](#9-cli-agent-specification)
-10. [Parser specifications](#10-parser-specifications)
-11. [Pricing table](#11-pricing-table)
-12. [Web app specification](#12-web-app-specification)
-13. [Background jobs (Inngest)](#13-background-jobs-inngest)
-14. [Slack integration](#14-slack-integration)
-15. [Stripe integration](#15-stripe-integration)
-16. [Error handling](#16-error-handling)
-17. [Logging](#17-logging)
-18. [Testing](#18-testing)
-19. [Build, run, dev, deploy commands](#19-build-run-dev-deploy-commands)
-20. [Lint and format](#20-lint-and-format)
-21. [CI/CD](#21-cicd)
-22. [Phase 0 — Landing page (Week 1–2)](#22-phase-0--landing-page-week-12)
-23. [Phase 1 — MVP build (Week 3–6)](#23-phase-1--mvp-build-week-36)
-24. [Phase 2 — Roadmap](#24-phase-2--roadmap)
-25. [CLAUDE.md scaffolds](#25-claudemd-scaffolds)
-26. [Definition of done](#26-definition-of-done)
-27. [Assumptions index](#27-assumptions-index)
+5. [Extension manifest](#5-extension-manifest)
+6. [Local data model](#6-local-data-model)
+7. [Cost estimation](#7-cost-estimation)
+8. [Pricing catalog](#8-pricing-catalog)
+9. [Parser specifications](#9-parser-specifications)
+10. [Watcher and debouncing](#10-watcher-and-debouncing)
+11. [UI surfaces](#11-ui-surfaces)
+12. [Commands](#12-commands)
+13. [Settings](#13-settings)
+14. [Privacy guarantees](#14-privacy-guarantees)
+15. [Error handling and logging](#15-error-handling-and-logging)
+16. [Testing](#16-testing)
+17. [Build and dev commands](#17-build-and-dev-commands)
+18. [Lint, format, license check](#18-lint-format-license-check)
+19. [CI/CD and release](#19-cicd-and-release)
+20. [Marketing page (`aimeter.infoc.one`)](#20-marketing-page-aimeterinfocone)
+21. [Phase 1 milestones](#21-phase-1-milestones)
+22. [Track-2 trigger](#22-track-2-trigger)
+23. [CLAUDE.md scaffolds](#23-claudemd-scaffolds)
+24. [Definition of done](#24-definition-of-done)
+25. [Assumptions index](#25-assumptions-index)
 
 ---
 
 ## 1. Mission, scope, and out-of-scope
 
 ### Mission
-A hosted FinOps dashboard for engineering team leads to track and attribute AI coding-agent spend across multiple agents (Claude Code, OpenAI Codex CLI, Google Gemini CLI, GitHub Copilot, Cursor, and others), with daily Slack digests, anomaly alerts, and CSV export.
+A free VS Code extension that gives the individual developer a single, private, **best-effort** view of their AI coding-agent token usage and **estimated** cost — across Claude Code, Codex CLI, Gemini CLI — without sending any data off the developer's machine. Token counts are pulled directly from each agent's local session logs; cost is computed from a bundled pricing catalog and presented with a confidence indicator. We never claim "actual cost" or "matches provider billing."
 
-### In scope (Phase 1 MVP)
-- Web app: marketing site at `infoc.one`, app at `app.infoc.one`
-- CLI agent (`@infoc/aimeter-cli`) installed per developer
-- Hosted backend (Next.js API routes on Vercel + Postgres on Neon)
-- Three Phase-1 parsers: Claude Code, Codex CLI, Gemini CLI
-- Two account-level pulls: Anthropic API, OpenAI API (covers BYOK extensions)
-- Per-org dashboard with per-user, per-agent, per-model, per-day breakdowns
-- Slack OAuth + daily digest + anomaly alert
-- Stripe Checkout + Customer Portal at $99/seat/month
-- CSV export
-- Email transactional via Resend
+### In scope (Track 1, Phase 1)
+- VS Code extension installable from the Marketplace as `infoc-one.aimeter`
+- Three Phase-1 parsers reading local JSONL session logs: Claude Code, Codex CLI, Gemini CLI
+- Local-only storage in VS Code's extension storage path
+- Status bar item showing today's tokens and estimated cost
+- Sidebar webview panel with breakdowns (today / 7d / 30d, by agent, by model)
+- Detail view: per-session list with drill-down
+- Settings panel (intervals, paths, units, opt-outs)
+- Versioned pricing catalog bundled in the extension; manual override per model in settings
+- Cost confidence indicators (high/medium/low) on every cost figure
+- CSV export of the local data
+- Cross-platform (macOS, Linux, Windows)
+- Marketing page at `aimeter.infoc.one` linking to the Marketplace
 
-### Explicitly out of scope (Phase 1)
-- VS Code extension (Phase 2 acquisition channel)
-- Copilot tracking (Phase 2 — needs OAuth-app access)
-- Cursor / Windsurf parsers (Phase 2)
-- BYOK individual-agent parsers — Cline, Roo, Continue, Aider (Phase 2; covered indirectly via account-level pulls)
-- Free tier, trial extensions beyond 14 days, custom plans
-- SSO / SAML
-- Datadog / Grafana / OTel exporter
-- Multi-currency (USD only)
-- Multi-org users (one user belongs to one org via Clerk Org)
-- Mobile app
-- Self-hosted / on-prem deployment
-- Internationalization (English only)
-- White-labeling
-- Custom domains for customer dashboards
+### Explicitly out of scope (Track 1)
+- **No SaaS backend, no API, no auth, no team features, no billing, no payment logic of any kind**
+- **No telemetry to any server.** Not even anonymized usage statistics.
+- No cloud sync (VS Code's settings sync, if user enables it, may sync settings — but never event data)
+- No Slack integration
+- No CSV upload, no team dashboards
+- No Copilot, Cursor, Windsurf parsers (deferred — different log surfaces)
+- No Cline, Roo Code, Continue, Aider parsers (deferred to Track 1.5 if user demand)
+- No reconciliation against provider billing APIs (no network calls)
+- No multi-user attribution (one machine = one user)
+- No web-based UI
+- No mobile companion
+- No internationalization (English only)
+- **No Pro tier. No paid features. Ever, in this track.**
+- No license server, no entitlement check, no telemetry pixel
 
 ---
 
@@ -80,1162 +91,635 @@ A hosted FinOps dashboard for engineering team leads to track and attribute AI c
 | Element | Convention | Example |
 |---|---|---|
 | File names | kebab-case | `usage-events.ts` |
-| Directories | kebab-case | `apps/web/app/(app)/dashboard` |
-| TypeScript types | PascalCase | `UsageEvent` |
-| Functions, variables | camelCase | `aggregateByDay` |
-| Constants | SCREAMING_SNAKE | `DEFAULT_PRICING` |
-| DB tables | snake_case plural | `usage_events` |
-| DB columns | snake_case | `cache_read_tokens` |
-| URL routes | kebab-case | `/api/cli-auth` |
-| Env vars | SCREAMING_SNAKE | `DATABASE_URL` |
-| npm package names | scoped, kebab | `@infoc/aimeter-cli` |
-| Branding in copy | "Infoc One AIMeter" first mention; "AIMeter" thereafter | |
-| CLI binary | `aimeter` | `aimeter init` |
+| Directories | kebab-case | `src/parsers/` |
+| TS types | PascalCase | `UsageEvent` |
+| Functions, variables | camelCase | `parseClaudeCodeLine` |
+| Constants | SCREAMING_SNAKE | `DEFAULT_FLUSH_MS` |
+| Settings keys | camelCase under `aimeter.*` namespace | `aimeter.statusBar.enabled` |
+| Commands | dot-namespaced under `aimeter.` | `aimeter.openDashboard` |
+| Branding in copy | "INFOC ONE AIMeter" first mention; "AIMeter" thereafter | |
+| Marketplace ID | `infoc-one.aimeter` | (locked) |
 
-**Wordmark capitalization:** `AIMeter` (camelCase, two-letter prefix). Never `AIMETER`, `Aimeter`, or `AI Meter`.
-
-**Commit format:** Conventional Commits (`feat:`, `fix:`, `chore:`, `docs:`, etc.).
-
-**Branch naming:** `feat/<short-desc>`, `fix/<short-desc>`. PRs squash-merged into `main`.
+**Wordmark:** `AIMeter` (camelCase). Never `AIMETER`, `Aimeter`, or `AI Meter`.
+**Commit format:** Conventional Commits.
+**Branch:** `feat/<short>`, `fix/<short>`. Squash-merged into `main`.
 
 ---
 
 ## 3. Tech stack with pinned versions
 
-> `[ASSUMPTION: latest-stable as of 5 May 2026. Bump to current latest if newer compatible versions exist when you start. Pin in package.json — no caret ranges for runtime deps in the API/CLI.]`
+> `[ASSUMPTION: latest stable as of 5 May 2026; bump to current latest if newer compatible exists at start.]`
 
 ### Runtime
-- **Node.js**: `22.11.0` LTS (use `.nvmrc`)
-- **pnpm**: `9.15.0` (use `packageManager` field in root package.json)
-- **TypeScript**: `5.7.2` (strict mode, `noUncheckedIndexedAccess: true`)
+- **Node.js (for build only)**: `22.11.0` LTS (`.nvmrc`)
+- **pnpm**: `9.15.0`
+- **TypeScript**: `5.7.2` (strict, `noUncheckedIndexedAccess: true`)
+- **VS Code engine target**: `^1.95.0` (October 2024 release; gives us the modern webview API and stable secret storage)
 
-### Web app (`apps/web`)
-- `next@15.1.4`
-- `react@19.0.0`, `react-dom@19.0.0`
-- `@clerk/nextjs@6.10.0`
-- `drizzle-orm@0.38.3`, `drizzle-kit@0.30.1` (devDep)
-- `postgres@3.4.5` (driver)
-- `stripe@17.5.0`
-- `resend@4.0.1`
-- `inngest@3.27.0`
-- `@sentry/nextjs@8.47.0`
-- `zod@3.24.1`
-- `tailwindcss@4.0.0`, `@tailwindcss/postcss@4.0.0`
-- `lucide-react@0.469.0` (icons)
-- shadcn/ui (copied into `apps/web/components/ui/`, not a dep)
-- `recharts@2.15.0`
-- `date-fns@4.1.0`
-- `pino@9.5.0`, `pino-pretty@13.0.0` (dev)
+### Extension dependencies (runtime)
+- `chokidar@4.0.3` — file watching, cross-platform, awaitWriteFinish (MIT)
+- `zod@3.24.1` — schema validation of parsed events (MIT)
+- `date-fns@4.1.0` — date math (MIT)
 
-### CLI (`apps/cli`)
-- `commander@12.1.0`
-- `chalk@5.4.1`
-- `ora@8.1.1`
-- `chokidar@4.0.3`
-- `zod@3.24.1`
-- `undici@7.2.0`
-- `node-machine-id@1.1.12`
+That's it. The extension intentionally has a tiny runtime surface — the more deps, the more attack surface for a privacy-sensitive tool.
 
-### Slack worker (`apps/slack-bot`)
-- `@slack/bolt@4.2.0`
+### Webview UI
+The sidebar dashboard is a webview rendered with vanilla HTML + a small amount of CSS + plain TypeScript bundled by esbuild. No React, no framework. **Reasoning:** webviews are ephemeral, the data is small (≤30 days × few hundred events), and a framework would 5× the bundle and cold-start time for no real benefit. Charts are drawn with a tiny SVG-rendering helper (~150 lines) — Chart.js / Recharts not needed for a 3-chart panel.
+
+`[ASSUMPTION: vanilla TS in the webview is sufficient. If complexity grows in Phase 2, evaluate Preact (3 KB) before reaching for React.]`
 
 ### Dev tooling
 - `vitest@2.1.8`, `@vitest/coverage-v8@2.1.8`
+- `@vscode/test-cli@0.0.10`, `@vscode/test-electron@2.4.1` — VS Code integration tests
+- `@vscode/vsce@3.2.1` — Marketplace packaging + publishing
+- `esbuild@0.24.2` — extension + webview bundling
 - `eslint@9.17.0` flat config + `@typescript-eslint/eslint-plugin@8.19.0`
-- `prettier@3.4.2`, `prettier-plugin-tailwindcss@0.6.9`
-- `tsx@4.19.2`
+- `prettier@3.4.2`
 - `husky@9.1.7`, `lint-staged@15.3.0`
+- `license-checker@25.0.1`
 
-### Infra
-- **Vercel** — web app + API routes
-- **Neon** — Postgres 16, branch-per-PR
-- **Inngest Cloud** — background jobs
-- **Sentry** — error tracking
-- **Axiom** `[ASSUMPTION]` — log aggregation; free tier covers MVP
-- **npm** — CLI distribution as `@infoc/aimeter-cli`
+### Notably NOT used
+- **No backend.** No NestJS, no Postgres, no Keycloak, no Temporal, no OpenFGA, no SaaS.
+- **No telemetry SDK.** No Application Insights, no Mixpanel, no PostHog. None.
+- **No payment SDK.** No Stripe.
+- **No HTTP client.** The extension makes zero outbound HTTP calls in v1 (one optional update check is a single fetch behind a setting that defaults OFF).
 
 ---
 
 ## 4. Repository layout
 
 ```
-aimeter/
+aimeter-infoc-one/
 ├── .github/
 │   ├── workflows/
-│   │   ├── ci.yml
-│   │   └── release-cli.yml
+│   │   ├── ci.yml                       # typecheck, lint, test, license-check, build
+│   │   └── release.yml                  # tag → vsce publish
 │   ├── ISSUE_TEMPLATE/
 │   │   ├── bug.md
 │   │   └── feature.md
 │   └── pull_request_template.md
 ├── .vscode/
+│   ├── launch.json                      # F5 → Extension Development Host
+│   ├── tasks.json
 │   ├── settings.json
 │   └── extensions.json
-├── apps/
-│   ├── web/
-│   │   ├── app/
-│   │   │   ├── (marketing)/
-│   │   │   │   ├── layout.tsx
-│   │   │   │   ├── page.tsx
-│   │   │   │   ├── pricing/page.tsx
-│   │   │   │   ├── privacy/page.tsx
-│   │   │   │   ├── terms/page.tsx
-│   │   │   │   └── docs/[...slug]/page.tsx
-│   │   │   ├── (app)/
-│   │   │   │   ├── layout.tsx
-│   │   │   │   ├── dashboard/page.tsx
-│   │   │   │   ├── users/page.tsx
-│   │   │   │   ├── settings/
-│   │   │   │   │   ├── page.tsx
-│   │   │   │   │   ├── billing/page.tsx
-│   │   │   │   │   ├── slack/page.tsx
-│   │   │   │   │   ├── api-keys/page.tsx
-│   │   │   │   │   ├── alerts/page.tsx
-│   │   │   │   │   └── pricing-overrides/page.tsx
-│   │   │   │   └── onboarding/page.tsx
-│   │   │   ├── api/
-│   │   │   │   ├── ingest/route.ts
-│   │   │   │   ├── cli/
-│   │   │   │   │   ├── auth/init/route.ts
-│   │   │   │   │   ├── auth/exchange/route.ts
-│   │   │   │   │   └── keys/revoke/route.ts
-│   │   │   │   ├── orgs/[orgId]/
-│   │   │   │   │   ├── usage/route.ts
-│   │   │   │   │   ├── users/route.ts
-│   │   │   │   │   └── export.csv/route.ts
-│   │   │   │   ├── webhooks/
-│   │   │   │   │   ├── stripe/route.ts
-│   │   │   │   │   ├── clerk/route.ts
-│   │   │   │   │   └── slack/route.ts
-│   │   │   │   ├── slack/
-│   │   │   │   │   ├── install/route.ts
-│   │   │   │   │   └── oauth-callback/route.ts
-│   │   │   │   ├── inngest/route.ts
-│   │   │   │   ├── waitlist/route.ts
-│   │   │   │   └── health/route.ts
-│   │   │   ├── cli-auth/page.tsx
-│   │   │   ├── globals.css
-│   │   │   └── layout.tsx
-│   │   ├── components/
-│   │   │   ├── ui/                  # shadcn primitives
-│   │   │   ├── marketing/
-│   │   │   ├── dashboard/
-│   │   │   └── settings/
-│   │   ├── lib/
-│   │   │   ├── auth.ts
-│   │   │   ├── api.ts
-│   │   │   ├── stripe.ts
-│   │   │   ├── slack.ts
-│   │   │   ├── email.ts
-│   │   │   ├── logger.ts
-│   │   │   └── env.ts
-│   │   ├── inngest/
-│   │   │   ├── client.ts
-│   │   │   └── functions/
-│   │   │       ├── daily-rollup.ts
-│   │   │       ├── daily-digest.ts
-│   │   │       ├── anomaly-check.ts
-│   │   │       ├── stripe-sync.ts
-│   │   │       └── clerk-sync.ts
-│   │   ├── middleware.ts
-│   │   ├── next.config.mjs
-│   │   ├── tailwind.config.ts
-│   │   ├── postcss.config.mjs
-│   │   ├── tsconfig.json
-│   │   ├── package.json
-│   │   ├── CLAUDE.md
-│   │   └── .env.example
-│   │
-│   ├── cli/
-│   │   ├── src/
-│   │   │   ├── index.ts
-│   │   │   ├── commands/
-│   │   │   │   ├── init.ts
-│   │   │   │   ├── start.ts
-│   │   │   │   ├── stop.ts
-│   │   │   │   ├── status.ts
-│   │   │   │   ├── logout.ts
-│   │   │   │   └── doctor.ts
-│   │   │   ├── auth.ts
-│   │   │   ├── config.ts
-│   │   │   ├── watcher.ts
-│   │   │   ├── pusher.ts
-│   │   │   ├── parsers/             # Re-exports from @infoc/parsers
-│   │   │   ├── logger.ts
-│   │   │   └── version.ts
-│   │   ├── bin/aimeter.js
-│   │   ├── tsconfig.json
-│   │   ├── package.json
-│   │   ├── CLAUDE.md
-│   │   └── README.md
-│   │
-│   └── slack-bot/
-│       ├── src/
-│       │   ├── digest.ts
-│       │   ├── alerts.ts
-│       │   ├── messages.ts
-│       │   └── client.ts
-│       ├── package.json
-│       └── CLAUDE.md
-│
-├── packages/
+├── src/
+│   ├── extension.ts                     # entry: activate / deactivate
+│   ├── lifecycle.ts                     # boot order, shutdown handlers
+│   ├── store/
+│   │   ├── index.ts                     # local store API
+│   │   ├── persistence.ts               # JSONL on disk under globalStorageUri
+│   │   ├── schema.ts                    # zod schemas for stored data
+│   │   └── migrations.ts                # storage version migrations
 │   ├── parsers/
-│   │   ├── src/
-│   │   │   ├── base.ts
-│   │   │   ├── claude-code.ts
-│   │   │   ├── codex-cli.ts
-│   │   │   ├── gemini-cli.ts
-│   │   │   ├── anthropic-api.ts
-│   │   │   ├── openai-api.ts
-│   │   │   ├── types.ts
-│   │   │   └── index.ts
-│   │   ├── fixtures/
-│   │   │   ├── claude-code/
-│   │   │   ├── codex-cli/
-│   │   │   └── gemini-cli/
-│   │   ├── tests/
-│   │   ├── tsconfig.json
-│   │   ├── package.json
-│   │   └── CLAUDE.md
-│   │
+│   │   ├── base.ts                      # JsonlParser abstract class
+│   │   ├── claude-code.ts
+│   │   ├── codex-cli.ts
+│   │   ├── gemini-cli.ts
+│   │   ├── types.ts
+│   │   └── index.ts
 │   ├── pricing/
-│   │   ├── src/
-│   │   │   ├── index.ts
-│   │   │   ├── models.ts
-│   │   │   └── compute.ts
-│   │   ├── tests/
-│   │   ├── package.json
-│   │   └── CLAUDE.md
-│   │
-│   ├── db/
-│   │   ├── src/
-│   │   │   ├── schema.ts
-│   │   │   ├── client.ts
-│   │   │   ├── queries/
-│   │   │   │   ├── usage.ts
-│   │   │   │   ├── orgs.ts
-│   │   │   │   ├── users.ts
-│   │   │   │   ├── api-keys.ts
-│   │   │   │   └── alerts.ts
-│   │   │   └── index.ts
-│   │   ├── migrations/              # generated by drizzle-kit
-│   │   ├── drizzle.config.ts
-│   │   ├── package.json
-│   │   └── CLAUDE.md
-│   │
-│   └── shared/
-│       ├── src/
-│       │   ├── schemas/
-│       │   ├── time.ts
-│       │   └── index.ts
-│       └── package.json
-│
-├── tools/
-│   ├── seed.ts
-│   └── reset-db.ts
-├── pnpm-workspace.yaml
-├── package.json
-├── tsconfig.base.json
+│   │   ├── catalog.ts                   # bundled DEFAULT_CATALOG
+│   │   ├── compute.ts                   # cost + confidence
+│   │   └── index.ts
+│   ├── watcher/
+│   │   ├── index.ts                     # chokidar wrapper
+│   │   ├── path-resolver.ts             # OS-aware default path resolution
+│   │   └── offsets.ts                   # per-file byte-offset tracking
+│   ├── ui/
+│   │   ├── status-bar.ts                # status bar item
+│   │   ├── webview/
+│   │   │   ├── panel.ts                 # webview panel host
+│   │   │   ├── messages.ts              # ext ↔ webview message protocol
+│   │   │   ├── index.html               # template (interpolated by panel.ts)
+│   │   │   ├── webview.ts               # webview-side script (bundled separately)
+│   │   │   ├── webview.css
+│   │   │   └── charts.ts                # tiny SVG chart helpers
+│   │   ├── commands.ts                  # command palette commands
+│   │   └── notifications.ts
+│   ├── settings/
+│   │   ├── index.ts                     # typed config getter (no bare workspace.getConfiguration outside)
+│   │   └── schema.ts                    # zod schema mirroring package.json contributes.configuration
+│   ├── lib/
+│   │   ├── logger.ts                    # OutputChannel-based logger
+│   │   ├── time.ts
+│   │   ├── id.ts                        # crypto.randomUUID wrapper
+│   │   └── fs.ts
+│   └── tests/
+│       ├── unit/
+│       │   ├── parsers/
+│       │   ├── pricing/
+│       │   └── store/
+│       └── integration/                 # uses @vscode/test-electron
+├── fixtures/                            # real JSONL samples for tests
+│   ├── claude-code/
+│   ├── codex-cli/
+│   └── gemini-cli/
+├── media/                               # icons, banners
+│   ├── icon.png                         # 128×128 PNG, displayed on Marketplace
+│   ├── icon-light.svg                   # status bar (light theme)
+│   ├── icon-dark.svg                    # status bar (dark theme)
+│   └── banner.png                       # Marketplace banner (1376×400 PNG)
+├── docs/
+│   ├── parsers.md                       # how to add a new parser
+│   ├── pricing-catalog.md               # how to update bundled catalog
+│   └── privacy.md                       # the full privacy stance
+├── scripts/
+│   ├── build.mjs                        # esbuild driver (extension + webview)
+│   ├── package.mjs                      # vsce package wrapper
+│   ├── check-licenses.js
+│   └── check-pricing-freshness.ts       # CI gate: catalog ≤ 30 days old
+├── package.json                         # extension manifest + npm scripts
+├── tsconfig.json
+├── tsconfig.webview.json
 ├── eslint.config.js
 ├── prettier.config.mjs
+├── vitest.config.ts
+├── .vscodeignore                        # files excluded from .vsix package
 ├── .gitignore
 ├── .nvmrc
 ├── .editorconfig
-├── README.md
+├── README.md                            # also displayed on Marketplace listing
 ├── HANDOVER.md
 ├── SOLUTION.md
 ├── CLAUDE.md
-└── LICENSE                          # [ASSUMPTION: proprietary, not OSS in v1]
+├── DECISIONS.md
+├── CHANGELOG.md
+├── LICENSES.md
+└── LICENSE                              # [ASSUMPTION: MIT for the extension itself, makes Marketplace listing cleaner]
 ```
 
 ---
 
-## 5. Environment variables
+## 5. Extension manifest
 
-### `.env.example` (commit this; never commit `.env.local`)
-
-```bash
-# ───────── App ─────────
-NODE_ENV=development
-LOG_LEVEL=debug
-NEXT_PUBLIC_APP_URL=http://localhost:3000
-NEXT_PUBLIC_MARKETING_URL=http://localhost:3000
-NEXT_PUBLIC_API_URL=http://localhost:3000
-
-# ───────── Database (Neon) ─────────
-DATABASE_URL=postgres://user:pass@localhost:5432/aimeter
-
-# ───────── Clerk ─────────
-NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_xxx
-CLERK_SECRET_KEY=sk_test_xxx
-CLERK_WEBHOOK_SECRET=whsec_xxx
-NEXT_PUBLIC_CLERK_SIGN_IN_URL=/sign-in
-NEXT_PUBLIC_CLERK_SIGN_UP_URL=/sign-up
-NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL=/dashboard
-NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL=/onboarding
-
-# ───────── Stripe ─────────
-STRIPE_SECRET_KEY=sk_test_xxx
-STRIPE_WEBHOOK_SECRET=whsec_xxx
-STRIPE_PRICE_ID_TEAM_SEAT_MONTHLY=price_xxx
-STRIPE_PRICE_ID_TEAM_SEAT_ANNUAL=price_xxx
-STRIPE_PORTAL_CONFIGURATION_ID=bpc_xxx
-
-# ───────── Resend ─────────
-RESEND_API_KEY=re_xxx
-RESEND_FROM_EMAIL="AIMeter <hello@infoc.one>"
-RESEND_REPLY_TO=support@infoc.one
-
-# ───────── Slack ─────────
-SLACK_CLIENT_ID=xxxxxxxxxx.xxxxxxxxxx
-SLACK_CLIENT_SECRET=xxx
-SLACK_SIGNING_SECRET=xxx
-SLACK_STATE_SECRET=randomly-generated-32-byte-hex
-
-# ───────── Inngest ─────────
-INNGEST_EVENT_KEY=xxx
-INNGEST_SIGNING_KEY=xxx
-
-# ───────── Sentry ─────────
-SENTRY_DSN=https://xxx@xxx.ingest.sentry.io/xxx
-NEXT_PUBLIC_SENTRY_DSN=https://xxx@xxx.ingest.sentry.io/xxx
-SENTRY_AUTH_TOKEN=xxx                # CI only
-SENTRY_ORG=infoc
-SENTRY_PROJECT=aimeter-web
-
-# ───────── Axiom (logs) ─────────
-AXIOM_TOKEN=xaat-xxx
-AXIOM_DATASET=aimeter-prod
-
-# ───────── Internal ─────────
-CRON_SECRET=randomly-generated-32-byte-hex
-TOKEN_ENCRYPTION_KEY=randomly-generated-32-byte-hex   # AES-256-GCM key for Slack tokens
-```
-
-### CLI config (lives at `~/.infoc-aimeter/config.json`, mode `0600`)
+`package.json` core fields:
 
 ```json
 {
-  "apiUrl": "https://api.infoc.one",
-  "apiKey": "aimeter_live_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
-  "deviceLabel": "MacBook Pro - Sarah",
-  "userId": "user_xxx",
-  "orgId": "org_xxx",
-  "watchPaths": {
-    "claudeCode": ["~/.claude/projects"],
-    "codexCli":   ["~/.codex/sessions"],
-    "geminiCli":  ["~/.gemini/sessions"]
+  "name": "aimeter",
+  "displayName": "INFOC ONE AIMeter",
+  "description": "Meter every AI agent, in one place. Track Claude Code, Codex CLI, Gemini CLI token usage locally and privately.",
+  "version": "0.1.0",
+  "publisher": "infoc-one",
+  "license": "MIT",
+  "icon": "media/icon.png",
+  "engines": { "vscode": "^1.95.0" },
+  "categories": ["Other", "Visualization"],
+  "keywords": ["ai", "tokens", "cost", "claude", "codex", "gemini", "finops", "usage", "metering"],
+  "repository": { "type": "git", "url": "https://github.com/infoc-one/aimeter-infoc-one" },
+  "bugs": { "url": "https://github.com/infoc-one/aimeter-infoc-one/issues" },
+  "homepage": "https://aimeter.infoc.one",
+  "main": "./dist/extension.js",
+  "activationEvents": ["onStartupFinished"],
+  "contributes": {
+    "commands": [
+      { "command": "aimeter.openDashboard", "title": "AIMeter: Open Dashboard" },
+      { "command": "aimeter.exportCsv", "title": "AIMeter: Export CSV…" },
+      { "command": "aimeter.refresh", "title": "AIMeter: Refresh Now" },
+      { "command": "aimeter.clearData", "title": "AIMeter: Clear All Stored Data…" },
+      { "command": "aimeter.openLogs", "title": "AIMeter: Show Output Logs" },
+      { "command": "aimeter.runDoctor", "title": "AIMeter: Run Doctor (Diagnostics)" }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        { "id": "aimeter", "title": "AIMeter", "icon": "media/icon-dark.svg" }
+      ]
+    },
+    "views": {
+      "aimeter": [
+        { "id": "aimeter.dashboard", "name": "Dashboard", "type": "webview" }
+      ]
+    },
+    "configuration": {
+      "title": "AIMeter",
+      "properties": {
+        "aimeter.statusBar.enabled": { "type": "boolean", "default": true, "description": "Show AIMeter in the status bar." },
+        "aimeter.statusBar.format": { "type": "string", "enum": ["cost-today", "tokens-today", "both"], "default": "cost-today", "description": "What to show in the status bar." },
+        "aimeter.refreshIntervalSec": { "type": "number", "default": 30, "minimum": 5, "maximum": 600, "description": "How often the watcher debounces and reads new lines, in seconds." },
+        "aimeter.parsers.claudeCode.enabled": { "type": "boolean", "default": true },
+        "aimeter.parsers.claudeCode.paths": { "type": "array", "items": { "type": "string" }, "default": [], "description": "Override default ~/.claude/projects path. Empty = use default." },
+        "aimeter.parsers.codexCli.enabled": { "type": "boolean", "default": true },
+        "aimeter.parsers.codexCli.paths": { "type": "array", "items": { "type": "string" }, "default": [] },
+        "aimeter.parsers.geminiCli.enabled": { "type": "boolean", "default": true },
+        "aimeter.parsers.geminiCli.paths": { "type": "array", "items": { "type": "string" }, "default": [] },
+        "aimeter.pricing.overrides": { "type": "object", "default": {}, "description": "Per-model rate overrides keyed by model id." },
+        "aimeter.retention.days": { "type": "number", "default": 365, "minimum": 7, "maximum": 3650, "description": "Days of event history to keep locally before pruning." },
+        "aimeter.network.updateCheck": { "type": "boolean", "default": false, "description": "Allow AIMeter to make ONE outbound request per day to check for catalog updates. OFF by default." }
+      }
+    },
+    "menus": {
+      "view/title": [
+        { "command": "aimeter.refresh", "when": "view == aimeter.dashboard", "group": "navigation" },
+        { "command": "aimeter.exportCsv", "when": "view == aimeter.dashboard", "group": "navigation" }
+      ]
+    }
   }
 }
 ```
 
-CLI exits with error if file perms are looser than `0600`.
-
-### Validated env loader
-
-`apps/web/lib/env.ts` parses `process.env` once on boot via zod and re-exports a typed `env`. **No bare `process.env.X` access elsewhere in the codebase.** ESLint rule enforces this.
-
-```ts
-// apps/web/lib/env.ts
-import { z } from 'zod';
-
-const schema = z.object({
-  NODE_ENV: z.enum(['development', 'test', 'production']),
-  DATABASE_URL: z.string().url(),
-  CLERK_SECRET_KEY: z.string().startsWith('sk_'),
-  CLERK_WEBHOOK_SECRET: z.string().startsWith('whsec_'),
-  STRIPE_SECRET_KEY: z.string().startsWith('sk_'),
-  STRIPE_WEBHOOK_SECRET: z.string().startsWith('whsec_'),
-  STRIPE_PRICE_ID_TEAM_SEAT_MONTHLY: z.string().startsWith('price_'),
-  RESEND_API_KEY: z.string().startsWith('re_'),
-  SLACK_CLIENT_ID: z.string(),
-  SLACK_CLIENT_SECRET: z.string(),
-  SLACK_SIGNING_SECRET: z.string(),
-  SLACK_STATE_SECRET: z.string().min(32),
-  INNGEST_EVENT_KEY: z.string(),
-  INNGEST_SIGNING_KEY: z.string(),
-  SENTRY_DSN: z.string().url().optional(),
-  AXIOM_TOKEN: z.string().optional(),
-  CRON_SECRET: z.string().min(32),
-  TOKEN_ENCRYPTION_KEY: z.string().length(64),       // 32 bytes hex
-  NEXT_PUBLIC_APP_URL: z.string().url(),
-  NEXT_PUBLIC_MARKETING_URL: z.string().url(),
-});
-
-export const env = schema.parse(process.env);
-export type Env = z.infer<typeof schema>;
-```
-
 ---
 
-## 6. Database schema
+## 6. Local data model
 
-### Drizzle schema (`packages/db/src/schema.ts`) — source of truth
+All data lives under `context.globalStorageUri` (VS Code-managed, per-installation). No data leaves the machine.
 
-```ts
-import {
-  pgTable, pgEnum, uuid, text, timestamp, integer, bigint,
-  numeric, boolean, date, primaryKey, index,
-} from 'drizzle-orm/pg-core';
-
-export const planEnum = pgEnum('plan', ['trial', 'team_monthly', 'team_annual', 'paused', 'cancelled']);
-export const roleEnum = pgEnum('role', ['owner', 'admin', 'member']);
-export const agentEnum = pgEnum('agent', [
-  'claude-code', 'codex-cli', 'gemini-cli',
-  'anthropic-api', 'openai-api',
-  'copilot', 'cursor', 'cline', 'aider', 'unknown',
-]);
-export const alertTypeEnum = pgEnum('alert_type', ['anomaly', 'budget_daily', 'budget_monthly']);
-export const alertChannelEnum = pgEnum('alert_channel', ['slack', 'email']);
-
-export const organizations = pgTable('organizations', {
-  id: uuid('id').defaultRandom().primaryKey(),
-  clerkOrgId: text('clerk_org_id').notNull().unique(),
-  name: text('name').notNull(),
-  slug: text('slug').notNull().unique(),
-  plan: planEnum('plan').notNull().default('trial'),
-  trialEndsAt: timestamp('trial_ends_at', { withTimezone: true }),
-  stripeCustomerId: text('stripe_customer_id').unique(),
-  stripeSubscriptionId: text('stripe_subscription_id').unique(),
-  seatCount: integer('seat_count').notNull().default(0),
-  timezone: text('timezone').notNull().default('UTC'),
-  digestHour: integer('digest_hour').notNull().default(9),
-  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
-  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
-}, (t) => ({ slugIdx: index('orgs_slug_idx').on(t.slug) }));
-
-export const users = pgTable('users', {
-  id: uuid('id').defaultRandom().primaryKey(),
-  orgId: uuid('org_id').notNull().references(() => organizations.id, { onDelete: 'cascade' }),
-  clerkUserId: text('clerk_user_id').notNull().unique(),
-  email: text('email').notNull(),
-  name: text('name'),
-  role: roleEnum('role').notNull().default('member'),
-  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
-}, (t) => ({ orgEmailIdx: index('users_org_email_idx').on(t.orgId, t.email) }));
-
-export const apiKeys = pgTable('api_keys', {
-  id: uuid('id').defaultRandom().primaryKey(),
-  orgId: uuid('org_id').notNull().references(() => organizations.id, { onDelete: 'cascade' }),
-  userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
-  keyHash: text('key_hash').notNull().unique(),
-  keyPrefix: text('key_prefix').notNull(),
-  label: text('label'),
-  lastUsedAt: timestamp('last_used_at', { withTimezone: true }),
-  revokedAt: timestamp('revoked_at', { withTimezone: true }),
-  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
-}, (t) => ({ orgIdx: index('api_keys_org_idx').on(t.orgId) }));
-
-export const cliAuthCodes = pgTable('cli_auth_codes', {
-  deviceCode: text('device_code').primaryKey(),
-  userCode: text('user_code').notNull(),
-  deviceLabel: text('device_label').notNull(),
-  status: text('status').notNull().default('pending'),  // pending | authorized | expired
-  authorizedUserId: uuid('authorized_user_id').references(() => users.id),
-  authorizedOrgId: uuid('authorized_org_id').references(() => organizations.id),
-  apiKeyId: uuid('api_key_id').references(() => apiKeys.id),
-  expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
-  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
-});
-
-export const usageEvents = pgTable('usage_events', {
-  id: text('id').primaryKey(),
-  orgId: uuid('org_id').notNull().references(() => organizations.id, { onDelete: 'cascade' }),
-  userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
-  agent: agentEnum('agent').notNull(),
-  model: text('model').notNull(),
-  inputTokens: integer('input_tokens').notNull().default(0),
-  outputTokens: integer('output_tokens').notNull().default(0),
-  cacheReadTokens: integer('cache_read_tokens').notNull().default(0),
-  cacheWriteTokens: integer('cache_write_tokens').notNull().default(0),
-  costUsd: numeric('cost_usd', { precision: 12, scale: 6 }).notNull().default('0'),
-  project: text('project'),
-  sessionId: text('session_id'),
-  ts: timestamp('ts', { withTimezone: true }).notNull(),
-  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
-}, (t) => ({
-  orgTsIdx: index('usage_org_ts_idx').on(t.orgId, t.ts),
-  userTsIdx: index('usage_user_ts_idx').on(t.userId, t.ts),
-  orgAgentTsIdx: index('usage_org_agent_ts_idx').on(t.orgId, t.agent, t.ts),
-}));
-
-export const dailyRollups = pgTable('daily_rollups', {
-  orgId: uuid('org_id').notNull().references(() => organizations.id, { onDelete: 'cascade' }),
-  userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
-  agent: agentEnum('agent').notNull(),
-  model: text('model').notNull(),
-  date: date('date').notNull(),
-  inputTokens: bigint('input_tokens', { mode: 'number' }).notNull().default(0),
-  outputTokens: bigint('output_tokens', { mode: 'number' }).notNull().default(0),
-  cacheReadTokens: bigint('cache_read_tokens', { mode: 'number' }).notNull().default(0),
-  cacheWriteTokens: bigint('cache_write_tokens', { mode: 'number' }).notNull().default(0),
-  costUsd: numeric('cost_usd', { precision: 14, scale: 6 }).notNull().default('0'),
-  events: integer('events').notNull().default(0),
-}, (t) => ({
-  pk: primaryKey({ columns: [t.orgId, t.userId, t.agent, t.model, t.date] }),
-  orgDateIdx: index('rollups_org_date_idx').on(t.orgId, t.date),
-}));
-
-export const alerts = pgTable('alerts', {
-  id: uuid('id').defaultRandom().primaryKey(),
-  orgId: uuid('org_id').notNull().references(() => organizations.id, { onDelete: 'cascade' }),
-  type: alertTypeEnum('type').notNull(),
-  threshold: numeric('threshold', { precision: 12, scale: 4 }),
-  channel: alertChannelEnum('channel').notNull(),
-  channelTarget: text('channel_target').notNull(),
-  enabled: boolean('enabled').notNull().default(true),
-  lastFiredAt: timestamp('last_fired_at', { withTimezone: true }),
-  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
-});
-
-export const slackInstallations = pgTable('slack_installations', {
-  orgId: uuid('org_id').primaryKey().references(() => organizations.id, { onDelete: 'cascade' }),
-  teamId: text('team_id').notNull(),
-  teamName: text('team_name').notNull(),
-  botTokenEncrypted: text('bot_token_encrypted').notNull(),
-  botUserId: text('bot_user_id').notNull(),
-  defaultChannelId: text('default_channel_id'),
-  installedAt: timestamp('installed_at', { withTimezone: true }).notNull().defaultNow(),
-});
-
-export const pricingOverrides = pgTable('pricing_overrides', {
-  orgId: uuid('org_id').notNull().references(() => organizations.id, { onDelete: 'cascade' }),
-  model: text('model').notNull(),
-  inputPerMillion: numeric('input_per_million', { precision: 10, scale: 4 }),
-  outputPerMillion: numeric('output_per_million', { precision: 10, scale: 4 }),
-  cacheReadPerMillion: numeric('cache_read_per_million', { precision: 10, scale: 4 }),
-  cacheWritePerMillion: numeric('cache_write_per_million', { precision: 10, scale: 4 }),
-}, (t) => ({ pk: primaryKey({ columns: [t.orgId, t.model] }) }));
-
-export const waitlist = pgTable('waitlist', {
-  id: uuid('id').defaultRandom().primaryKey(),
-  email: text('email').notNull().unique(),
-  source: text('source'),
-  utm: text('utm'),
-  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
-});
+```
+~/.../globalStorage/infoc-one.aimeter/
+├── events/
+│   ├── 2026-04.jsonl          # one JSONL file per month, append-only
+│   ├── 2026-05.jsonl
+│   └── …
+├── offsets.json                # per-watched-file byte offset
+├── catalog-overrides.json      # user pricing overrides (settings-mirror)
+├── meta.json                   # storage schema version, install id
+└── logs/
+    └── extension.log           # daily-rotated, 5 files × 5 MB max
 ```
 
-### Migration policy
-- All schema changes via `pnpm db:generate` then `pnpm db:migrate`.
-- **Never edit a committed migration file.** Create a new one.
-- Production migrations run from CI on `main`, after deploy succeeds.
-
-### Seed data (`tools/seed.ts`)
-- Creates 1 org "Acme Eng" (`acme-eng`), 5 users, 14 days of usage events spanning all five Phase-1 agents.
-- Idempotent: safe to run multiple times.
-- Run via `pnpm seed`.
-
----
-
-## 7. API contracts
-
-All API routes live in `apps/web/app/api/`. JSON only. UTC timestamps in ISO 8601.
-
-### Common error envelope
+### Event record (zod-validated)
 
 ```ts
-type ApiError = {
-  error: {
-    code: 'unauthorized' | 'rate_limited' | 'invalid_request' | 'not_found' | 'forbidden' | 'server_error';
-    message: string;
-    details?: unknown;
+type StoredEvent = {
+  id: string;                    // sha256("<agent>:<upstream_id>")
+  agent: 'claude-code' | 'codex-cli' | 'gemini-cli';
+  model: string;
+  inputTokens: number;
+  outputTokens: number;
+  cacheReadTokens: number;
+  cacheWriteTokens: number;
+  costUsdEstimated: number;      // computed at parse time
+  costConfidence: 'high' | 'medium' | 'low';
+  pricingSource: 'default' | 'user_override';
+  pricingSnapshot: {             // frozen rates at compute time
+    inputPerMillion: number;
+    outputPerMillion: number;
+    cacheReadPerMillion: number;
+    cacheWritePerMillion: number;
+    catalogVerifiedAt: string;
   };
+  project?: string;              // path-derived slug, never the actual path
+  sessionId?: string;
+  ts: string;                    // ISO 8601 UTC
 };
 ```
 
-HTTP codes used: `200`, `201`, `204`, `400`, `401`, `403`, `404`, `409`, `413`, `429`, `500`.
+### Storage rules
+- **Append-only by month.** Each new event appends one JSON line to the current month's file. No in-place edits.
+- **Idempotent.** Before append, check the in-memory index keyed by `id`. The index is rebuilt at activation by streaming the latest 90 days of events.
+- **Pruned on activation.** Files older than `retention.days` are deleted at startup.
+- **Atomic writes.** Each append is `fs.appendFile` with `flag: 'a'`. JSONL line ends with `\n`. Crash-resilient.
 
-### `POST /api/ingest`
+### Schema version
+`meta.json.schemaVersion: 1`. If a future version changes the event shape, `migrations.ts` handles upgrade in place at activation.
 
-**Auth:** `Authorization: Bearer aimeter_live_<random>`
-**Rate limit:** 60 req/min/key, 5 MB max body.
-**Idempotency:** `event.id` is the dedupe key. Insert with `ON CONFLICT (id) DO NOTHING`.
+### Install ID
+`meta.json.installId`: `crypto.randomUUID()`, generated on first activation, stored locally. **Never transmitted.** Used only as a debug correlation key in local logs.
 
-Request:
+---
+
+## 7. Cost estimation
+
+**Cost figures are estimates. Always.** The extension never claims to match provider billing.
+
+### Compute (`src/pricing/compute.ts`)
+
 ```ts
-{
-  events: Array<{
-    id: string;
-    agent: 'claude-code' | 'codex-cli' | 'gemini-cli' | 'anthropic-api' | 'openai-api';
-    model: string;
-    inputTokens: number;          // >= 0, integer
-    outputTokens: number;
-    cacheReadTokens?: number;
-    cacheWriteTokens?: number;
-    project?: string;             // <= 200 chars
-    sessionId?: string;
-    ts: string;                   // ISO 8601 UTC
-  }>;
-  cliVersion: string;
+export type ComputeResult = {
+  costUsdEstimated: number;
+  costConfidence: 'high' | 'medium' | 'low';
+  pricingSource: 'default' | 'user_override';
+  pricingSnapshot: PricingSnapshot;
+};
+
+export function computeCost(event: ParsedEventInput, ctx: ComputeCtx): ComputeResult {
+  // 1. user override?  → user_override; confidence high
+  // 2. bundled catalog match?
+  //    → default
+  //    → confidence high if (now - catalog.verifiedAt) ≤ 30 days
+  //    → confidence medium if (now - catalog.verifiedAt) ≤ 90 days
+  //    → confidence low otherwise
+  // 3. no match → cost 0; confidence low
 }
 ```
 
-Response 200:
+### Confidence levels in the UI
+- **High** — green dot, no caveat
+- **Medium** — yellow dot, hover shows "rates verified more than 30 days ago"
+- **Low** — gray dot, hover shows "no rate found for this model — cost shown as 0"
+
+Total cost figures show the **lowest confidence** of any contributing event. Mixed: yellow.
+
+---
+
+## 8. Pricing catalog
+
+Bundled in `src/pricing/catalog.ts`. **No DB, no network fetch.** Updates ship with extension version bumps.
+
 ```ts
-{ accepted: number; deduped: number; rejected: Array<{ id: string; reason: string }> }
+export type PricingEntry = {
+  provider: 'anthropic' | 'openai' | 'google';
+  model: string;                      // canonical model id
+  aliases?: string[];                 // dated suffixes etc.
+  inputPerMillion: number;
+  outputPerMillion: number;
+  cacheReadPerMillion: number;
+  cacheWritePerMillion: number;
+  effectiveFrom: string;              // ISO date
+  verifiedAt: string;                 // ISO date — gated by CI
+  sourceUrl: string;
+};
+
+export const DEFAULT_CATALOG: PricingEntry[] = [
+  // Anthropic
+  { provider: 'anthropic', model: 'claude-opus-4-7',
+    inputPerMillion: 15.00, outputPerMillion: 75.00,
+    cacheReadPerMillion: 1.50, cacheWritePerMillion: 18.75,
+    effectiveFrom: '2026-04-01', verifiedAt: '2026-05-05',
+    sourceUrl: 'https://www.anthropic.com/pricing' },
+  // … claude-opus-4-6, claude-sonnet-4-6, claude-haiku-4-5
+  // … gpt-5, gpt-5-codex, gpt-4.1, o4-mini
+  // … gemini-3-flash, gemini-3-pro
+];
 ```
 
-Errors: `401 unauthorized` (invalid/revoked key), `400 invalid_request` (zod fail), `413 payload_too_large`, `429 rate_limited`.
+### Pre-publish gate
+`scripts/check-pricing-freshness.ts` runs in CI before `vsce publish`. **Blocks the release** if any catalog entry has `verifiedAt > 30 days ago`. Forces the maintainer to re-verify rates before each Marketplace release.
 
-Server flow: validate key → look up `org_id`/`user_id` from key hash → zod-validate body → for each event compute `cost_usd` from pricing (org overrides → defaults) → bulk insert → enqueue rollup (debounced 60s per org) → return counts.
+This is a hard gate, not a warning.
 
-### `POST /api/cli/auth/init`
-
-Public. Body: `{ deviceLabel: string }`. Response: `{ deviceCode, userCode, verificationUrl: 'https://app.infoc.one/cli-auth?code=USERCODE', expiresIn: 600 }`. Stores row in `cli_auth_codes` with `status='pending'`, `expires_at = now + 10m`.
-
-### `POST /api/cli/auth/exchange`
-
-Public. Body: `{ deviceCode }`. Polled by CLI every 2s.
-- `pending` → respond `204`
-- `authorized` → respond `200 { apiKey, userId, orgId }` then mark `expired` so the code can't be reused
-- `expired` or unknown → respond `410 Gone`
-
-### `POST /api/cli/keys/revoke`
-
-Auth: Clerk session. Body: `{ keyId }`. Sets `revoked_at = now`. Response `204`.
-
-### `GET /api/orgs/:orgId/usage`
-
-Auth: Clerk session, must belong to `orgId`. Query: `from`, `to` (ISO dates), `groupBy` (`agent`|`model`|`user`|`day`).
-Response:
-```ts
+### User override
+Settings → `aimeter.pricing.overrides`:
+```json
 {
-  totals: { tokens: number; costUsd: number; events: number };
-  rows: Array<{ key: string; tokens: number; costUsd: number; events: number }>;
+  "claude-opus-4-7": {
+    "inputPerMillion": 12.00,
+    "outputPerMillion": 60.00,
+    "cacheReadPerMillion": 1.20,
+    "cacheWritePerMillion": 15.00
+  }
 }
 ```
-Reads from `daily_rollups`.
-
-### `GET /api/orgs/:orgId/users`
-
-Lists users with last-30-day spend and sparkline data.
-
-### `GET /api/orgs/:orgId/export.csv`
-
-Streams CSV of events in the given range. Headers: `timestamp,user_email,agent,model,input,output,cache_r,cache_w,cost_usd,project,session_id`.
-
-### `POST /api/webhooks/stripe`
-
-Signature-verified. Events:
-- `checkout.session.completed` → create/upgrade org subscription
-- `customer.subscription.updated` → sync seat count, plan
-- `customer.subscription.deleted` → set `plan='cancelled'`
-- `invoice.payment_failed` → mark `paused` after 2nd failure
-
-### `POST /api/webhooks/clerk`
-
-Svix-signature-verified. Events:
-- `user.created` → upsert `users`
-- `organization.created` → upsert `organizations`
-- `organizationMembership.created/deleted` → adjust `seat_count` and call Stripe to update subscription quantity
-
-### `POST /api/webhooks/slack`
-
-Slack signature verification. Handles `app_uninstalled`, `tokens_revoked`.
-
-### `POST /api/waitlist`
-
-Public. Body: `{ email, source?, utm? }`. Insert into `waitlist`. Send confirmation email via Resend. Response `204`.
-
-### `GET /api/health`
-
-`200 { status: 'ok', commit: string, time: string }`. Used by uptime.
-
-### `GET|POST /api/inngest`
-
-Inngest serve handler. Auth via Inngest signing key.
+Takes precedence; flagged as `user_override` with confidence `high`.
 
 ---
 
-## 8. Authentication
+## 9. Parser specifications
 
-### Web app
-- **Provider:** Clerk with Organizations enabled.
-- **Sign-in:** email + magic link only `[ASSUMPTION: defer Google/SSO]`.
-- **Org creation:** required during onboarding.
-- **Roles:** `owner`, `admin`, `member`. Only `owner`/`admin` manage billing, alerts, integrations, and any other user's API keys.
-- **Middleware:** `apps/web/middleware.ts` protects all `(app)` routes. Public routes: `/`, `/pricing`, `/privacy`, `/terms`, `/docs/*`, `/sign-in`, `/sign-up`, `/cli-auth`, `/api/webhooks/*`, `/api/health`, `/api/cli/*`, `/api/ingest`, `/api/waitlist`.
-
-### API key (CLI)
-- Format: `aimeter_live_<32 random chars [a-z0-9]>` (44 chars total).
-- Stored as `sha256(key)` in `api_keys.key_hash`. Plaintext shown once at creation, never retrievable.
-- Issued only via the CLI device-code flow.
-- Revocable from dashboard.
-- `POST /api/ingest` looks up the hash, updates `last_used_at`, rejects if `revoked_at` is set.
-
-### CLI device-code flow
-
-```
-CLI                                    Server                              Browser
- │── POST /cli/auth/init ──────────────▶│                                    │
- │◀── { userCode, verificationUrl } ────│                                    │
- │ open verificationUrl ─────────────────────────────────────────────────────▶│
- │                                       │◀── user signs in via Clerk ───────│
- │                                       │◀── user picks org, confirms ──────│
- │                                       │── stores authorized state ────────│
- │── poll /cli/auth/exchange every 2s ──▶│                                    │
- │── … 204 …                              │                                    │
- │◀── 200 { apiKey, userId, orgId } ─────│                                    │
- │ writes ~/.infoc-aimeter/config.json   │                                    │
-```
-
-CLI and server both expire the device code at 10 minutes.
-
----
-
-## 9. CLI agent specification
-
-### Distribution
-- npm: `@infoc/aimeter-cli`, public. Binary: `aimeter`.
-- Install: `npm install -g @infoc/aimeter-cli`.
-- `[ASSUMPTION]` Phase 2: also Homebrew tap `infoc/tap` and a Scoop bucket.
-
-### Commands
-
-```
-aimeter init                 # First-time auth + config write
-aimeter start                # Watch in foreground
-aimeter start --daemon       # Detach, write pid to ~/.infoc-aimeter/pid
-aimeter stop                 # Stop daemon
-aimeter status               # Running state, last-flush, pending events
-aimeter logout               # Clear local config; revoke key on server
-aimeter doctor               # Diagnose paths, perms, network, auth
-aimeter --version
-aimeter --help
-```
-
-### Config file
-- macOS/Linux: `~/.infoc-aimeter/config.json`
-- Windows: `%USERPROFILE%\.infoc-aimeter\config.json`
-- Permissions: `0600`. CLI exits with error if perms are looser.
-
-### Watcher
-- `chokidar` with `awaitWriteFinish: { stabilityThreshold: 200 }`.
-- Watches three roots by default (overridable):
-  - `~/.claude`, `~/.codex`, `~/.gemini`
-- Per-file byte offset tracked in `~/.infoc-aimeter/state.json` so restarts resume.
-
-### Pusher
-- Flush every 30s, **or** when buffer >100 events, **or** on SIGINT/SIGTERM.
-- POST batch to `/api/ingest`. Retry with backoff: 1s, 5s, 30s, 5m. After 5m, queue to `~/.infoc-aimeter/outbox/` and retry every 5m.
-- Dedupe by `event.id` (CLI hashes `agent + upstream_id` for stable IDs across retries).
-
-### Privacy
-- Never reads source code, file contents, prompt text, or completions.
-- Parsers explicitly **drop** these fields if present in upstream JSONL.
-- Never sends env vars, file paths, or metadata beyond what's in the API contract.
-
-### `aimeter doctor` example output
-```
-✔ Config readable, perms 0600
-✔ API reachable (api.infoc.one, 89ms)
-✔ Auth valid (user: sarah@acme.com, org: acme-eng)
-✔ Claude Code logs found: ~/.claude/projects (14 sessions)
-✔ Codex CLI logs found: ~/.codex/sessions (7 sessions)
-✘ Gemini CLI logs not found: ~/.gemini/sessions
-  → If you don't use Gemini CLI, ignore. Else verify the agent is installed.
-✔ Outbox empty
-✔ Daemon running (pid 12345, started 2h ago)
-```
-
----
-
-## 10. Parser specifications
-
-### Common contract (`packages/parsers/src/base.ts`)
+### Common contract (`src/parsers/base.ts`)
 
 ```ts
-export abstract class JsonlParser extends EventEmitter {
-  abstract readonly agent: AgentId;
-  abstract readonly defaultPaths: string[];
-  abstract parseLine(line: string, file: string): UsageEvent[];
+export abstract class JsonlParser {
+  abstract readonly agent: 'claude-code' | 'codex-cli' | 'gemini-cli';
+  abstract defaultPaths(homedir: string, platform: NodeJS.Platform): string[];
+  abstract parseLine(line: string, file: string): ParsedEventInput[];
 }
 ```
 
 ### Claude Code parser
-
 - **Default paths:** `~/.claude/projects/**/*.jsonl`
-- **Schema (representative):**
-```json
-{
-  "type": "assistant",
-  "message": {
-    "id": "msg_01ABC",
-    "model": "claude-opus-4-7",
-    "usage": {
-      "input_tokens": 1234,
-      "output_tokens": 567,
-      "cache_read_input_tokens": 8910,
-      "cache_creation_input_tokens": 200
-    }
-  },
-  "timestamp": "2026-05-05T12:00:00.000Z",
-  "sessionId": "ses_abc"
-}
-```
-- **Mapping:** `id = sha256("claude-code:" + message.id)`, `agent = "claude-code"`, `model = message.model`, tokens map directly, `ts = timestamp`, `project = path-derived slug from .../projects/<slug>/...`.
-- **Defensive:** drop record if `usage` absent. Tolerate missing fields by treating as 0.
+- **Mapping:** `id = sha256("claude-code:" + message.id)`, `model = message.model`, `inputTokens = usage.input_tokens`, etc., `ts = timestamp`, `project` = path-derived slug from `.../projects/<slug>/...` (slug only, never full path)
+- **Defensive:** drop record if `usage` absent. Treat missing fields as 0.
 
 ### Codex CLI parser
-
 - **Default paths:** `~/.codex/sessions/**/*.jsonl`
-- **Mapping:** look in `payload.usage` or `usage`. `prompt_tokens` → `inputTokens`, `completion_tokens` → `outputTokens`, `cached_tokens` → `cacheReadTokens`. `created_at` (epoch s) or `timestamp` (ISO) → `ts`.
+- **Mapping:** `prompt_tokens` → `inputTokens`, `completion_tokens` → `outputTokens`, `cached_tokens` → `cacheReadTokens`, `created_at` (epoch s) or `timestamp` (ISO) → `ts`
 
 ### Gemini CLI parser
-
 - **Default paths:** `~/.gemini/sessions/**/*.jsonl` `[ASSUMPTION: verify exact log location and JSONL schema before writing — Gemini CLI in active development]`
-- **Mapping:** `usageMetadata.promptTokenCount`, `candidatesTokenCount`, `cachedContentTokenCount`.
+- **Mapping:** `usageMetadata.promptTokenCount` → `inputTokens`, `candidatesTokenCount` → `outputTokens`, `cachedContentTokenCount` → `cacheReadTokens`
 
-### Anthropic API account-level pull
+### Field-drop policy (privacy)
 
-- Server-side, not from CLI.
-- Org admin pastes an Anthropic API key in Settings → Integrations.
-- Inngest cron (every 6h) calls Anthropic's usage endpoint, fetches per-day per-model spend, inserts as synthetic events with `agent='anthropic-api'`. `[ASSUMPTION: confirm exact endpoint and per-key granularity at build time]`
+Each parser has a **deny-list** of fields it must drop if encountered:
+```ts
+const FORBIDDEN_FIELDS = [
+  'content', 'text', 'message.content', 'completion', 'prompt',
+  'system_prompt', 'messages', 'response', 'choices[].message.content',
+  'tool_use.input', 'tool_result.content', 'output', 'input',
+];
+```
+A test asserts that no parser ever returns any field outside the strict `ParsedEventInput` zod schema, even if upstream JSONL contains extra keys. **This is a P0 invariant.**
 
-### OpenAI API account-level pull
+### Fixtures and tests
 
-Same shape, `agent='openai-api'`.
-
-### Fixture-based tests
-
-Each parser ships at least 3 real (anonymized) JSONL fixtures in `packages/parsers/fixtures/<agent>/v<version>.jsonl`. Tests in `packages/parsers/tests/<agent>.test.ts` assert exact normalized output. CI runs them.
+Each parser ships ≥3 anonymized JSONL fixtures in `fixtures/<agent>/v<n>.jsonl`. Tests assert exact normalized output and that no forbidden fields leak through.
 
 ---
 
-## 11. Pricing table
+## 10. Watcher and debouncing
 
-`packages/pricing/src/models.ts`:
+- `chokidar@4` with `awaitWriteFinish: { stabilityThreshold: 200, pollInterval: 100 }`
+- Watches the union of `parsers.<agent>.paths` (default if empty) for each enabled parser
+- Per-file byte offset tracked in `offsets.json`; on change event, read from offset → end, parse new full lines, persist offset
+- Debounce per-file: 300 ms after last write event
+- Global flush interval: `aimeter.refreshIntervalSec` (default 30 s) — also triggers UI refresh signal
+- Watcher errors logged to OutputChannel; never crash the extension
 
-```ts
-import type { PricingEntry } from './index';
-
-/**
- * Per 1,000,000 tokens, USD.
- * [ASSUMPTION: Snapshot 5 May 2026. Verify against official pricing pages
- * before launch. Users override per-model via Settings → Pricing Overrides.]
- */
-export const DEFAULT_PRICING: Record<string, PricingEntry> = {
-  // Anthropic
-  'claude-opus-4-7':   { input: 15.00, output: 75.00, cacheRead: 1.50, cacheWrite: 18.75 },
-  'claude-opus-4-6':   { input: 15.00, output: 75.00, cacheRead: 1.50, cacheWrite: 18.75 },
-  'claude-sonnet-4-6': { input:  3.00, output: 15.00, cacheRead: 0.30, cacheWrite:  3.75 },
-  'claude-haiku-4-5':  { input:  1.00, output:  5.00, cacheRead: 0.10, cacheWrite:  1.25 },
-
-  // OpenAI
-  'gpt-5':             { input:  5.00, output: 20.00, cacheRead: 0.50, cacheWrite: 0 },
-  'gpt-5-codex':       { input:  5.00, output: 20.00, cacheRead: 0.50, cacheWrite: 0 },
-  'gpt-4.1':           { input:  2.50, output: 10.00, cacheRead: 0.25, cacheWrite: 0 },
-  'o4-mini':           { input:  1.10, output:  4.40, cacheRead: 0.11, cacheWrite: 0 },
-
-  // Google
-  'gemini-3-flash':    { input:  0.30, output:  1.20, cacheRead: 0.075, cacheWrite: 0 },
-  'gemini-3-pro':      { input:  3.50, output: 14.00, cacheRead: 0.875, cacheWrite: 0 },
-};
-```
-
-```ts
-export function computeCost(e: UsageEvent, overrides?: PricingMap): number {
-  const p = overrides?.[e.model] ?? DEFAULT_PRICING[normalize(e.model)] ?? ZERO;
-  return (
-    (e.inputTokens     * p.input)     +
-    (e.outputTokens    * p.output)    +
-    (e.cacheReadTokens * p.cacheRead) +
-    (e.cacheWriteTokens* p.cacheWrite)
-  ) / 1_000_000;
-}
-```
-
-`normalize` strips dated suffixes (`-20251001`).
+### Activation cost
+Activation is `onStartupFinished` (not `*`), so VS Code starts before AIMeter does any work. First scan only reads new bytes since last shutdown — typically <50 ms.
 
 ---
 
-## 12. Web app specification
+## 11. UI surfaces
 
-### Route map
+### Status bar
+- Right side, priority `100`
+- Format per setting: `$(graph) $4.27 today` or `$(graph) 412k tokens today`
+- Tooltip: "AIMeter — click to open dashboard"
+- Click → `aimeter.openDashboard`
+- Updates on every flush; no flicker (debounced 200 ms)
+- Confidence dot prepended when total has medium/low confidence: `🟡 $4.27 today`
 
-| Route | Auth | Purpose |
+### Sidebar webview ("Dashboard")
+Activity bar icon → AIMeter view → webview panel.
+
+Layout (top to bottom):
+1. **Window picker:** Today / 7d / 30d / Custom
+2. **Three summary cards:** Tokens · Estimated cost · Events. Each shows confidence indicator.
+3. **Daily trend** SVG bar chart, color-segmented by agent
+4. **By agent** horizontal bars
+5. **By model** sortable table (model · tokens · cost · count)
+6. **Recent sessions** list — last 50, click to expand a session's events
+
+Empty state:
+```
+No events yet.
+
+AIMeter watches:
+   ✔  ~/.claude/projects (Claude Code)
+   ✔  ~/.codex/sessions (Codex CLI)
+   ✘  ~/.gemini/sessions (not found)
+
+Run an AI session in any of the above tools to start seeing data here.
+[Run Doctor]  [Open Settings]
+```
+
+### Detail view
+Webview message protocol (`ext ↔ webview`):
+
+```ts
+type FromExtension =
+  | { type: 'window-data'; payload: WindowData }
+  | { type: 'session-detail'; payload: SessionDetail }
+  | { type: 'doctor-result'; payload: DoctorResult }
+  | { type: 'error'; message: string };
+
+type FromWebview =
+  | { type: 'request-window'; payload: { window: 'today' | '7d' | '30d' | { from: string; to: string } } }
+  | { type: 'request-session'; payload: { sessionId: string } }
+  | { type: 'export-csv' }
+  | { type: 'run-doctor' }
+  | { type: 'open-settings' };
+```
+
+All messages zod-validated on both sides. Webview CSP restricts to `default-src 'none'; script-src 'nonce-{nonce}'; style-src 'unsafe-inline'`.
+
+---
+
+## 12. Commands
+
+| Command | Title | Behavior |
 |---|---|---|
-| `/` | public | Landing |
-| `/pricing` | public | Pricing |
-| `/privacy`, `/terms` | public | Legal |
-| `/docs/[...]` | public | Docs |
-| `/sign-in`, `/sign-up` | public | Clerk |
-| `/cli-auth` | clerk-required | CLI device-code browser side |
-| `/onboarding` | authed | Org create + invite + Slack |
-| `/dashboard` | authed | Main dashboard |
-| `/users` | authed | Per-user breakdown |
-| `/settings` | authed | Index |
-| `/settings/billing` | owner/admin | Stripe portal link |
-| `/settings/slack` | owner/admin | Slack install + channel |
-| `/settings/api-keys` | authed (own); admin sees all | Manage keys |
-| `/settings/alerts` | admin | Alert rules |
-| `/settings/pricing-overrides` | admin | Per-model price overrides |
+| `aimeter.openDashboard` | Open Dashboard | Reveals the sidebar view |
+| `aimeter.exportCsv` | Export CSV… | Save dialog → writes CSV with all events in current window |
+| `aimeter.refresh` | Refresh Now | Force-flush watcher and re-render UI |
+| `aimeter.clearData` | Clear All Stored Data… | Modal warning → wipes `globalStorageUri/events/` |
+| `aimeter.openLogs` | Show Output Logs | Shows the AIMeter OutputChannel |
+| `aimeter.runDoctor` | Run Doctor (Diagnostics) | Runs path / perms / parse-sample checks; output in webview |
 
-### Dashboard
+CSV columns: `timestamp,agent,model,input,output,cache_r,cache_w,cost_usd_estimated,confidence,pricing_source,project,session_id`.
 
-Top row, three cards: **Tokens (window)**, **Cost (window)**, **Events (window)**.
-Window picker: Today / 7d / 30d / Custom.
-
-Charts:
-1. **Daily trend** — bar chart, cost per day, color-segmented by agent.
-2. **By agent** — horizontal bars, cost.
-3. **By model** — sortable table.
-
-Below: **By user** — table with avatar, name, email, last-30-day cost, % of org spend, sparkline.
-
-Empty state: "No events yet. Run `npm i -g @infoc/aimeter-cli && aimeter init` on each developer's machine."
-
-### Onboarding flow
-
-Three steps after sign-up:
-1. Create org (Clerk).
-2. Invite teammates (skip allowed).
-3. Show CLI install instructions with copy-to-clipboard. Optional: connect Slack now or later.
-
-### Component structure
-- `components/dashboard/SummaryCards.tsx`
-- `components/dashboard/DailyTrendChart.tsx` (recharts)
-- `components/dashboard/ByAgentChart.tsx`
-- `components/dashboard/UserTable.tsx`
-- `components/marketing/Hero.tsx`, `ProblemStrip.tsx`, `SolutionCards.tsx`, `Pricing.tsx`, `Faq.tsx`, `Footer.tsx`
-
-All built on shadcn/ui primitives.
-
-### Styling
-- Tailwind 4, CSS-first config in `globals.css`.
-- Brand tokens: `--color-navy: #0F172A; --color-teal: #0D9488; --color-amber: #F59E0B`.
-- Typography: Inter `[ASSUMPTION: replace if brand guide says otherwise]`.
+### Doctor checks
+1. Each enabled parser path exists and is readable
+2. ≥1 JSONL file in each path with size > 0
+3. Sample-parse the most recent line — successful?
+4. Storage path writable? Free space > 50 MB?
+5. Pricing catalog contains entries verified within last 90 days?
+6. Refresh interval reasonable (5–600 s)?
 
 ---
 
-## 13. Background jobs (Inngest)
+## 13. Settings
 
-`apps/web/inngest/functions/`. Registered at `/api/inngest`.
+All settings under the `aimeter.*` namespace. See `package.json contributes.configuration` in §5.
 
-### `daily-rollup`
-- Trigger: `usage.event.ingested` event (fanout from `/api/ingest`), debounced per-org with 60s throttle.
-- SELECT new events since last rollup → upsert `daily_rollups` grouped by `(user, agent, model, date)`.
-
-### `daily-digest`
-- Trigger: cron `0 * * * *` (every hour). Inside, check each org whose local time = `digestHour:00`.
-- For each, compose Slack Block Kit message and POST via stored bot token.
-
-### `anomaly-check`
-- Trigger: cron `0 */4 * * *` (every 4h).
-- For each user: compute trailing 7-day mean & stdev of daily cost. If today > mean + 2σ AND > $20, fire alert. Suppress same user-agent pair within 24h.
-
-### `stripe-sync`
-- Trigger: webhook `customer.subscription.updated`.
-- Sync `seatCount`, `plan`, `stripeSubscriptionId`.
-
-### `clerk-sync`
-- Trigger: Clerk webhook `organizationMembership.*`.
-- Adjust seat count via Stripe `subscriptions.update`.
+Typed access: `src/settings/index.ts` exposes `getSettings(): AimeterSettings` returning a zod-validated typed object. **No `vscode.workspace.getConfiguration('aimeter').get(...)` calls outside this module.** ESLint rule enforces.
 
 ---
 
-## 14. Slack integration
+## 14. Privacy guarantees
 
-### Install flow
-- Settings → Slack → "Add to Slack" → OAuth v2.
-- Scopes: `chat:write`, `channels:read`, `im:write`.
-- Store encrypted bot token (AES-256-GCM with `TOKEN_ENCRYPTION_KEY`), `teamId`, `botUserId`, `defaultChannelId`.
-- After install: ask user to pick a default channel.
+These are **product promises**, listed verbatim on the Marketplace listing and `aimeter.infoc.one`.
 
-### Daily digest (Block Kit)
+1. **No data leaves your machine.** The extension makes zero outbound HTTP calls in v1, except the optional `network.updateCheck` (default OFF; one fetch per day to a static JSON file when ON; never sends any data).
+2. **No source code is ever read.** Parsers operate on JSONL session-log files only — never on workspace files, never on editor buffers.
+3. **No prompts or completions are ever read.** Parsers explicitly drop these fields.
+4. **No machine fingerprinting.** The optional `installId` is `crypto.randomUUID()` generated locally, used only for local log correlation. Never transmitted.
+5. **No telemetry.** No Application Insights, no PostHog, no analytics. None.
+6. **No accounts, no auth, no API keys** — there is nothing to sign in to.
+7. **All settings sync via VS Code's built-in settings sync if the user enables it.** Event data is in `globalStorageUri`, which is **not** synced by VS Code. Event data stays on each machine.
+8. **You can wipe all stored data anytime** via `AIMeter: Clear All Stored Data…`.
 
-```
-:moneybag: *AIMeter daily digest — {date}*
-
-Yesterday your team spent *${total}* on AI tools.
-{trend_arrow} {pct}% vs trailing 7-day average.
-
-*Top spenders*
-1. {user1} — ${amount1}
-2. {user2} — ${amount2}
-3. {user3} — ${amount3}
-
-*By agent*
-{agent_breakdown_inline}
-
-<{dashboardUrl}|Open dashboard> · <{billingUrl}|Manage billing>
-```
-
-### Anomaly alert
-
-```
-:warning: *Spend spike: {user}*
-{user}'s AI spend was *${today}* on {date} — *{factor}×* their typical baseline (${baseline}/day).
-
-*Top tools used*
-{tool_breakdown}
-
-<{userDashboardUrl}|View detail>
-```
-
-### Bot identity
-- Display name: `AIMeter`
-- App icon: AIMeter mark, 240×240 PNG `[ASSUMPTION: design asset to be produced]`
+A test (`tests/integration/no-network.test.ts`) intercepts all network calls during integration runs and **fails the build if any network call is made**, except the explicit single update-check URL when the setting is on.
 
 ---
 
-## 15. Stripe integration
+## 15. Error handling and logging
 
-### Products and prices to create in Stripe dashboard
+### Logger
+A single `vscode.OutputChannel('AIMeter')` accessed via `lib/logger.ts`. Levels: `debug` / `info` / `warn` / `error`. JSON format with `ts`, `level`, `module`, `msg`, `meta`.
 
-| Product | Price ID env var | Type | Amount |
-|---|---|---|---|
-| AIMeter Team (monthly) | `STRIPE_PRICE_ID_TEAM_SEAT_MONTHLY` | recurring per_seat | $99/mo USD |
-| AIMeter Team (annual) | `STRIPE_PRICE_ID_TEAM_SEAT_ANNUAL` | recurring per_seat | $990/yr USD `[ASSUMPTION: 17% annual discount; defer Phase 2]` |
+### Error UX
+- **Recoverable** (parse error on a single line, transient FS error) — log warn, continue
+- **User-actionable** (path not found, perms denied) — surface as `vscode.window.showWarningMessage` with "Open Settings" button, throttled to once per 24h per error type
+- **Bug** (zod assertion fails, internal invariant broken) — log error, show toast "AIMeter: an internal error occurred — see Output for details" with "Show Logs" button
 
-### Checkout
-- 14-day trial without card collection (`subscription_data.trial_period_days = 14`, `payment_method_collection = 'if_required'`) `[ASSUMPTION]`
-- Success URL: `https://app.infoc.one/onboarding?checkout=success`
-- Cancel URL: `https://infoc.one/pricing?checkout=cancelled`
+Never crash the extension host. Every async boundary wrapped in `try/catch`.
 
-### Customer portal
-- Pre-configure: update payment, view invoices, cancel subscription. Disable plan changes (single plan).
-
-### Webhook events
-- `checkout.session.completed`
-- `customer.subscription.created`
-- `customer.subscription.updated`
-- `customer.subscription.deleted`
-- `invoice.payment_failed`
-- `invoice.payment_succeeded`
-
-### Seat-count sync
-- Clerk org member added → `subscriptions.update({ items: [{ id, quantity }] }, { proration_behavior: 'create_prorations' })`.
-- Removed → decrement. Allow zero.
+### File log
+Mirror to `globalStorageUri/logs/extension.log`, daily-rotated, 5 files × 5 MB max. Useful when user files an issue.
 
 ---
 
-## 16. Error handling
+## 16. Testing
 
-### Server (API routes)
-- All handlers wrapped in `withErrorHandler` that catches, logs, returns `ApiError` envelope.
-- Zod parse errors → 400 with `details`.
-- Unauth → 401. Forbidden → 403. Not found → 404.
-- Unexpected → 500, log with stack to Sentry, do **not** leak details to client.
+### Unit (vitest, runs without VS Code)
+- Each parser × ≥3 fixtures: assert exact normalized output, assert no forbidden fields leak
+- Pricing compute: confidence levels, snapshot stability, override precedence
+- Store persistence: append, dedupe, prune-by-retention
+- Path resolver: macOS, Linux, Windows, with various HOME values
 
-### Client (web)
-- Root error boundary in `apps/web/app/error.tsx`.
-- Toasts for transient failures (`use-toast` from shadcn).
-- Network errors retried once, then surface "Something went wrong" with refresh CTA.
-
-### CLI
-- Exit codes: `0` success, `1` user error, `2` config error, `3` network, `4` auth.
-- All errors logged to `~/.infoc-aimeter/logs/cli.log` with timestamp.
-- `aimeter doctor` is the first thing support tells users to run.
-
----
-
-## 17. Logging
-
-### Web
-- Logger: `pino`. Single shared instance from `apps/web/lib/logger.ts`.
-- Format: JSON. Fields: `level`, `msg`, `time`, `request_id`, `org_id`, `user_id`, `route`.
-- Levels: `LOG_LEVEL` env (`debug` dev, `info` prod).
-- Destination: stdout in dev (pretty), Axiom transport in prod.
-
-### CLI
-- Lightweight wrapper around `console`, gated by `--verbose`.
-- File log rotated daily, max 5 files × 10 MB.
-
-### What to log
-- Every API request: `method`, `path`, `status`, `duration_ms`, `org_id`, `user_id`.
-- Every CLI flush: `events_count`, `bytes`, `duration_ms`.
-- Every webhook: type + outcome.
-- Errors: full stack via Sentry; redacted in logs (no API keys, tokens, or PII beyond email).
-
----
-
-## 18. Testing
-
-### Unit (vitest)
-- Every parser: ≥3 fixtures → assert exact `UsageEvent[]` output.
-- Pricing: edge cases (unknown model, negative tokens, dated id).
-- Aggregator helpers.
-- Zod schemas (round-trip).
-
-### Integration (vitest + msw)
-- API routes against a Postgres testcontainer `[ASSUMPTION: defer if too slow; mock the DB layer instead]`.
-- Stripe webhooks: signed fixtures.
-- Clerk webhooks: signed fixtures.
-
-### E2E `[ASSUMPTION: Playwright deferred to Phase 2; manual smoke in Phase 1]`
+### Integration (`@vscode/test-electron`)
+- Activation completes within 1 s on a clean profile
+- Status bar item appears, updates after a fixture file is dropped into a watched dir
+- Webview opens, renders empty state, then renders data after fixture activity
+- Export CSV writes a non-empty file with correct headers
+- Clear-data command wipes events and resets UI to empty state
+- Doctor reports correct status across mixed paths
+- **No-network test:** intercept all network egress → assert zero calls during a 60-second activation + use cycle
 
 ### Coverage
-- Targets: 80% statements on `packages/parsers`, `packages/pricing`, `packages/db/queries`. No coverage gate elsewhere.
+- ≥85% on parsers, pricing, store
+- ≥70% overall
 
-### Smoke checklist (manual, every milestone)
-- Sign up → create org → empty dashboard.
-- `aimeter init` → device-code auth completes.
-- Run a Claude Code session → events appear within 90s.
-- Connect Slack → trigger digest manually → message arrives.
-- Stripe Checkout test card → seat count syncs.
-- Revoke API key → next CLI flush returns 401.
+### Marketplace pre-publish manual smoke
+1. Package locally with `pnpm package`
+2. Install the `.vsix` in a fresh VS Code profile
+3. Run a real Claude Code session for 5 minutes
+4. Verify status bar updates, webview shows data, CSV export works
+5. Inspect file system: confirm only `globalStorageUri/infoc-one.aimeter/` is touched
 
 ---
 
-## 19. Build, run, dev, deploy commands
+## 17. Build and dev commands
 
 ### Root `package.json` scripts
 
 ```json
 {
   "scripts": {
-    "dev":          "pnpm -r --parallel dev",
-    "dev:web":      "pnpm --filter @infoc/web dev",
-    "dev:cli":      "pnpm --filter @infoc/aimeter-cli dev",
-    "build":        "pnpm -r build",
-    "lint":         "eslint .",
-    "lint:fix":     "eslint . --fix",
-    "format":       "prettier --write .",
-    "typecheck":    "pnpm -r typecheck",
-    "test":         "vitest run",
-    "test:watch":   "vitest",
-    "test:cov":     "vitest run --coverage",
-    "db:generate":  "pnpm --filter @infoc/db generate",
-    "db:migrate":   "pnpm --filter @infoc/db migrate",
-    "db:studio":    "pnpm --filter @infoc/db studio",
-    "seed":         "tsx tools/seed.ts",
-    "reset-db":     "tsx tools/reset-db.ts",
-    "release:cli":  "pnpm --filter @infoc/aimeter-cli publish --access public",
-    "prepare":      "husky"
+    "dev":             "node scripts/build.mjs --watch",
+    "build":           "node scripts/build.mjs",
+    "package":         "pnpm build && vsce package --no-dependencies -o dist/aimeter-${npm_package_version}.vsix",
+    "publish":         "vsce publish --no-dependencies",
+    "lint":            "eslint .",
+    "lint:fix":        "eslint . --fix",
+    "format":          "prettier --write .",
+    "typecheck":       "tsc --noEmit && tsc --noEmit -p tsconfig.webview.json",
+    "test":            "vitest run",
+    "test:watch":      "vitest",
+    "test:cov":        "vitest run --coverage",
+    "test:vscode":     "vscode-test",
+    "license:check":   "node scripts/check-licenses.js",
+    "pricing:check":   "tsx scripts/check-pricing-freshness.ts",
+    "prepare":         "husky"
   }
 }
 ```
 
-### First-run sequence (developer onboarding)
+### Dev loop
+1. `pnpm install`
+2. `pnpm dev` (esbuild --watch)
+3. F5 in VS Code → Extension Development Host opens
+4. Drop fixture JSONL files into `~/.claude/projects/test/`
+5. Watch the status bar update
 
-```bash
-git clone https://github.com/infoc/aimeter.git
-cd aimeter
-nvm use                  # picks up .nvmrc → 22.11.0
-corepack enable
-pnpm install
-cp .env.example apps/web/.env.local   # then fill secrets
-pnpm db:migrate
-pnpm seed
-pnpm dev                              # → http://localhost:3000
-```
-
-### Deploy
-- **Web app:** push to `main` → Vercel auto-deploys. Preview deploys per PR.
-- **CLI:** tag `cli-v0.1.0` → GitHub Actions runs `release-cli.yml` → publishes to npm.
-- **DB migrations:** run from CI on `main` after deploy succeeds: `pnpm db:migrate`.
-- **Inngest:** functions auto-discovered when `apps/web` deploys.
+### Bundle layout
+- `dist/extension.js` — extension main (Node target)
+- `dist/webview.js` — webview script (browser target)
+- `dist/webview.css`
+- `media/*` — copied as-is
 
 ---
 
-## 20. Lint and format
+## 18. Lint, format, license check
 
 ### `eslint.config.js` (flat)
-- Extends `@typescript-eslint/recommended-type-checked` + `next/core-web-vitals` for `apps/web`.
-- Rules: `no-floating-promises: error`, `no-explicit-any: error`, `consistent-type-imports: error`, `prefer-const: error`.
-- Custom rule: ban `process.env.X` outside `lib/env.ts`.
+- `@typescript-eslint/recommended-type-checked`
+- Rules: `no-floating-promises: error`, `no-explicit-any: error`, `consistent-type-imports: error`, `prefer-const: error`
+- Custom rule: ban `vscode.workspace.getConfiguration` outside `src/settings/`
+- Custom rule: ban `fetch`, `http`, `https`, `node:http`, `node:https`, `axios`, `undici` imports outside `src/lib/update-check.ts`
 
 ### `prettier.config.mjs`
 ```js
@@ -1245,9 +729,13 @@ export default {
   trailingComma: 'all',
   printWidth: 100,
   arrowParens: 'always',
-  plugins: ['prettier-plugin-tailwindcss'],
 };
 ```
+
+### License check
+Runtime deps must be in: MIT / Apache-2.0 / BSD-2 / BSD-3 / ISC / PostgreSQL / MPL-2.0.
+Banned: GPL / AGPL / SSPL / BSL / FSL / Commons Clause / unlicensed.
+`scripts/check-licenses.js` parses `pnpm licenses list --json` and fails on violations.
 
 ### Pre-commit (husky + lint-staged)
 ```json
@@ -1261,15 +749,13 @@ export default {
 
 ---
 
-## 21. CI/CD
+## 19. CI/CD and release
 
 ### `.github/workflows/ci.yml`
 
 ```yaml
 name: CI
-on:
-  pull_request:
-  push: { branches: [main] }
+on: [pull_request, push]
 jobs:
   check:
     runs-on: ubuntu-latest
@@ -1285,16 +771,19 @@ jobs:
       - run: pnpm typecheck
       - run: pnpm lint
       - run: pnpm test
+      - run: pnpm license:check
       - run: pnpm build
+      - run: xvfb-run -a pnpm test:vscode
+        if: runner.os == 'Linux'
 ```
 
-### `.github/workflows/release-cli.yml`
+### `.github/workflows/release.yml`
 
 ```yaml
-name: Release CLI
+name: Release
 on:
   push:
-    tags: ['cli-v*']
+    tags: ['v*']
 jobs:
   publish:
     runs-on: ubuntu-latest
@@ -1305,295 +794,257 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version-file: .nvmrc
-          registry-url: https://registry.npmjs.org
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm --filter @infoc/aimeter-cli build
-      - run: pnpm --filter @infoc/aimeter-cli publish --access public --no-git-checks
-        env: { NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }} }
+      - run: pnpm typecheck && pnpm lint && pnpm test && pnpm license:check
+      - run: pnpm pricing:check          # HARD GATE: catalog ≤ 30d
+      - run: pnpm build
+      - run: pnpm package
+      - run: pnpm publish
+        env:
+          VSCE_PAT: ${{ secrets.VSCE_PAT }}
+      # Also publish to Open VSX for Cursor / VSCodium / Gitpod users
+      - run: pnpm dlx ovsx publish dist/*.vsix -p ${{ secrets.OVSX_PAT }}
 ```
 
-### Vercel project settings
-- Root directory: `apps/web`
-- Build command: `cd ../.. && pnpm install --frozen-lockfile && pnpm --filter @infoc/web build`
-- Output directory: `.next`
-- Env vars: copy from `.env.example`, populate prod values.
+### Release checklist (in `docs/release.md`)
+1. Re-verify pricing catalog against Anthropic / OpenAI / Google pricing pages; bump `verifiedAt` dates
+2. Update `CHANGELOG.md`
+3. Bump version in `package.json` (semver)
+4. Tag `v0.X.Y` and push
+5. CI publishes to Marketplace + Open VSX
+6. Smoke-test the published extension in a fresh profile
 
 ---
 
-## 22. Phase 0 — Landing page (Week 1–2)
+## 20. Marketing page (`aimeter.infoc.one`)
 
-### Deliverable
-A single Next.js page at `infoc.one`, no backend beyond Resend for email capture and a Stripe Payment Link for the early-access click. **Does not require any of the Phase 1 schema or auth.**
+A single static page. **Not part of the extension repo** — separate tiny repo or a static `index.html` deployed to any static host. Out of scope for the extension build but documented here for completeness.
 
-### Page structure (top to bottom)
+Sections:
+1. **Hero:** "Meter every AI agent, in one place." · "Free VS Code extension. Local. Private. Open source."
+2. **Install button:** big, deep-links to `vscode:extension/infoc-one.aimeter` and links to Marketplace + Open VSX
+3. **What it tracks:** Claude Code, Codex CLI, Gemini CLI logos
+4. **Three privacy promises** (from §14 above): no data leaves your machine, no source code read, no telemetry
+5. **Screenshots:** status bar, dashboard, settings
+6. **FAQ:** 6 entries — agents supported, where data lives, accuracy, offline, self-host, can I trust this
+7. **Footer:** GitHub repo, issue tracker, `hello@aimeter.infoc.one`
 
-#### Hero
-- H1: **Track every AI coding agent in one dashboard.**
-- Sub: *Built for the engineering lead whose AI bill doubled last quarter. Claude Code, Codex, Gemini CLI, Copilot, Cursor — one number, one dashboard, one Slack digest.*
-- Primary CTA: **Get early access — $99/seat/month** (Stripe Payment Link, waitlist mode)
-- Secondary CTA: **Book a 15-min call** (Calendly link)
-
-#### Problem strip (3 stats, large)
-- *2× — typical eng-team AI spend, doubling each quarter*
-- *3+ vendors — Anthropic, OpenAI, GitHub, all separate dashboards*
-- *0 — purpose-built tools for team-level attribution today*
-
-#### Solution (3 cards)
-- **Multi-agent.** Claude Code, Codex, Gemini, Copilot, Cursor — one view.
-- **Team-first.** Per-person attribution, daily Slack digest, anomaly alerts, CSV for finance.
-- **Neutral.** We don't sell AI tokens. The angle providers can't credibly take.
-
-#### How it works (3 steps)
-1. Each developer runs `aimeter init` once.
-2. AIMeter watches their AI agents and reports usage privately to your team's dashboard.
-3. You get a daily Slack digest. Finance gets a CSV. No more screenshots.
-
-#### Pricing
-- **Team — $99/seat/month.** 14-day free trial. Cancel anytime.
-
-#### FAQ (6 entries)
-1. *Which agents do you support?* Claude Code, Codex CLI, Gemini CLI in v1. Copilot, Cursor, Windsurf in v2. Account-level Anthropic/OpenAI pulls cover BYOK extensions (Cline, Roo, Continue, Aider).
-2. *Where does my data live?* Hosted Postgres, encrypted at rest. We capture token counts and metadata only — never source code, never prompts, never completions.
-3. *How accurate is it?* Token counts are pulled directly from each agent's session logs, matching the provider's billing. Cost is computed from current public pricing; override per-model in Settings.
-4. *Does it work offline?* The CLI buffers events locally and pushes when online.
-5. *Can I self-host?* Not in v1. Talk to us if it's a blocker.
-6. *Can I cancel?* Anytime, from the Stripe portal.
-
-#### Footer
-- Email: `hello@infoc.one`
-- Privacy, Terms
-- "Made by Infoc"
-
-### Email capture (Resend)
-- Inline form below hero: "Not ready yet? Get a heads-up at launch." → POST `/api/waitlist` → store in `waitlist`, send confirmation email.
-
-### Calendly
-- 15-min slot, 4 windows/day. `[ASSUMPTION: founder books these personally]`
-
-### Pass gate after 14 days
-- ≥ 15 qualified emails
-- ≥ 3 booked discovery calls
-- ≥ 1 Stripe Checkout click
-
-If passed → Phase 1. If failed → `HANDOVER.md` § "What to do next" pivot ladder.
+`[ASSUMPTION: Built with plain HTML + Tailwind via CDN; deploys as a static file to Cloudflare Pages or similar. ~1 day of work, separate from the extension build.]`
 
 ---
 
-## 23. Phase 1 — MVP build (Week 3–6)
+## 21. Phase 1 milestones
 
-### Milestone 1 — Skeleton (Week 3, days 1–3)
+### Milestone 0 — Namespace lock (must complete BEFORE coding)
 
-**Tasks:**
-- [ ] Init monorepo, configure pnpm workspaces, ESLint, Prettier, husky.
-- [ ] Set up Neon dev branch, run first migration with all tables.
-- [ ] Wire Clerk: sign-in, sign-up, org creation, middleware-protected `/(app)` routes.
-- [ ] Wire Stripe: Checkout for monthly seat, webhook handler, seat-count sync.
-- [ ] `/dashboard` empty state.
-- [ ] Sentry + Axiom plumbed.
+Marketplace publisher IDs cannot be renamed once created. Locking the namespace before any code is written prevents an expensive rename later.
 
-**Acceptance:** A new visitor signs up, creates an org, clicks Checkout (test mode), pays, lands on an empty dashboard. No 500s, no console errors.
+- [ ] Marketplace publisher ID `infoc-one` registered and verified at https://marketplace.visualstudio.com/manage
+- [ ] Marketplace publisher display name set to `INFOC ONE`
+- [ ] Open VSX namespace `infoc-one` claimed at https://open-vsx.org
+- [ ] GitHub org `infoc-one` exists; private repo `infoc-one/aimeter-infoc-one` created
+- [ ] Extension ID confirmed available as `infoc-one.aimeter` (search Marketplace; the slot must be unclaimed)
+- [ ] Azure DevOps PAT created with `Marketplace > Manage` scope; stored as repo secret `VSCE_PAT`
+- [ ] Open VSX PAT created; stored as repo secret `OVSX_PAT`
+- [ ] DNS for `aimeter.infoc.one` configured (CNAME or A record to static-host target)
+- [ ] Email forwarding for `hello@aimeter.infoc.one`, `support@aimeter.infoc.one`, `security@aimeter.infoc.one` working
+- [ ] License decision (`MIT` per `[ASSUMPTION]`) double-checked; `LICENSE` file ready
 
-### Milestone 2 — Capture (Week 3, days 4–7)
+**Acceptance:** Every item above is checked. If any item is blocked (e.g., publisher ID `infoc-one` is already taken), pause and pick an alternative; do NOT proceed to Milestone 1 with a temporary or wrong identifier.
 
-**Tasks:**
-- [ ] `@infoc/aimeter-cli` — `init`, `start`, `status`, `logout`, `doctor`.
-- [ ] Device-code flow + key issuance.
-- [ ] Claude Code parser + ≥3 fixtures + tests.
-- [ ] Codex CLI parser + fixtures + tests.
-- [ ] Gemini CLI parser + fixtures + tests.
-- [ ] `/api/ingest` with rate limiting, dedup, server-side cost compute.
+### Milestone 1 — Skeleton & first parser (Days 1–3)
 
-**Acceptance:** `npm i -g @infoc/aimeter-cli`, run `aimeter init`, complete browser auth, run a Claude Code session, wait 90s, see events in DB and dashboard.
+- [ ] Init repo with the layout from §4
+- [ ] `package.json` manifest configured per §5
+- [ ] esbuild config for extension + webview
+- [ ] `src/extension.ts` activates, registers commands, creates output channel
+- [ ] Status bar item shows "AIMeter — no data yet"
+- [ ] `src/store/` — append-only JSONL persistence with offsets
+- [ ] Claude Code parser + 3 fixtures + tests
+- [ ] Watcher wired for Claude Code path only
+- [ ] F5 dev loop works; running a Claude Code session produces data in store
 
-### Milestone 3 — Dashboard (Week 4)
+**Acceptance:** F5 → Extension Development Host. Drop a fixture JSONL into `~/.claude/projects/dev-test/` → status bar updates within 30 s with non-zero tokens. CSV export not yet — but events visible in raw store file.
 
-**Tasks:**
-- [ ] Daily-rollup Inngest function.
-- [ ] Summary cards + window picker.
-- [ ] Daily trend chart (recharts).
-- [ ] By-agent + by-model breakdowns.
-- [ ] Per-user table with sparklines.
-- [ ] CSV export endpoint.
+### Milestone 2 — Webview dashboard (Days 4–6)
 
-**Acceptance:** Dashboard p95 render <500ms with seeded data. CSV export downloads with correct columns, chronological, includes user emails for last 30 days.
+- [ ] Sidebar view container + webview panel
+- [ ] Webview message protocol with zod validation
+- [ ] Three summary cards rendered from store query
+- [ ] Daily trend SVG chart (vanilla TS, ~150 lines)
+- [ ] By-agent + by-model breakdowns
+- [ ] Window picker (Today / 7d / 30d)
+- [ ] Empty state and confidence indicators
+- [ ] Light + dark theme support via VS Code CSS variables
 
-### Milestone 4 — Slack + alerts (Week 5)
+**Acceptance:** Dashboard opens in <500 ms with seeded data. Window picker re-queries instantly. Confidence dots visible. Renders correctly in both light and dark themes.
 
-**Tasks:**
-- [ ] Slack OAuth install flow + encrypted bot token storage.
-- [ ] Channel picker.
-- [ ] Daily digest function (cron + tz-aware).
-- [ ] Anomaly check function (4-hourly).
-- [ ] In-app settings page.
+### Milestone 3 — Codex + Gemini parsers + commands (Days 7–9)
 
-**Acceptance:** Trigger digest manually from settings → Slack message in 5s. Inflate one user's events → anomaly alert fires within 4h.
+- [ ] Codex CLI parser + 3 fixtures + tests
+- [ ] Gemini CLI parser + 3 fixtures + tests `[ASSUMPTION: Gemini schema verified at start of this milestone]`
+- [ ] All three parsers running concurrently in the watcher
+- [ ] Doctor command implemented; results rendered in webview
+- [ ] CSV export command working
+- [ ] Refresh, Clear Data, Open Logs commands
 
-### Milestone 5 — Onboarding + first paying customer (Week 6)
+**Acceptance:** With all three agents producing fixture data, dashboard shows correct per-agent breakdown. Doctor reports each agent's status. CSV export contains expected columns and matches dashboard totals.
 
-**Tasks:**
-- [ ] Onboarding wizard (org → invite → CLI install → Slack).
-- [ ] Empty states polished.
-- [ ] ToS + Privacy pages drafted `[ASSUMPTION: solo founder uses a TOS template; replace before scale]`.
-- [ ] Status page placeholder.
-- [ ] First paying customer onboarded white-glove.
+### Milestone 4 — Settings, polish, marketplace prep (Days 10–12)
 
-**Acceptance:** A second teammate is invited, installs CLI, their events show up under their attribution, team lead sees both rows. First paying customer signs up self-serve, pays, runs a digest within 24h.
+- [ ] All settings exposed per §13
+- [ ] User pricing override flow tested end-to-end
+- [ ] Status bar formats (cost-today / tokens-today / both) work
+- [ ] Pre-publish gate: `pnpm pricing:check` enforces ≤30-day verification
+- [ ] No-network test passes
+- [ ] Marketplace assets: `icon.png`, `banner.png`, screenshots in `media/screenshots/`
+- [ ] `README.md` final (also Marketplace listing copy)
+- [ ] CI pipeline green; integration tests passing on Linux runner
+- [ ] Tag `v0.1.0-rc.1`, build `.vsix`, install in fresh profile, smoke test
+
+**Acceptance:** A clean VS Code install + Claude Code session for 30 minutes produces accurate readings, settings work, no errors in OutputChannel, no network calls observed, pricing freshness gate passes.
+
+### Milestone 5 — Marketplace publish (Day 13)
+
+- [ ] `vsce publish` to Marketplace as `infoc-one.aimeter` (publisher ID `infoc-one`)
+- [ ] `ovsx publish` to Open VSX
+- [ ] Marketing page at `aimeter.infoc.one` live
+- [ ] Initial outreach: post on r/vscode, r/ChatGPTCoding, r/ClaudeAI, Hacker News Show HN, dev.to
+- [ ] Monitor first 48 hours: install count, GitHub issues, error reports
+
+**Acceptance:** Extension installable from Marketplace by anyone via `code --install-extension infoc-one.aimeter`. ≥10 installs within 48h. Zero P0 bugs reported.
 
 ---
 
-## 24. Phase 2 — Roadmap
+## 22. Track-2 trigger
 
-Order driven by paying-customer feedback:
-1. Copilot via GitHub OAuth app
-2. Cursor + Windsurf parsers
-3. VS Code extension as acquisition surface
-4. Budgets and projections
-5. Per-project / per-repo attribution
-6. Annual billing + invoicing
-7. SSO / SAML
-8. Datadog / Grafana exporter
+Track 2 (the SaaS at `aimeter.infoc.one` for team leads) does **not** start until at least one of the following is true:
+
+1. **≥1,000 weekly active extension users** (measured via Marketplace public install count, since the extension itself ships no telemetry — public counts are the only signal we'll have)
+2. **≥5 unsolicited inbound messages** from team leads to `hello@aimeter.infoc.one` asking "can my team see this together?" or equivalent
+3. **≥1 company asking for a paid invoice** for team-wide rollout
+
+When triggered, the Track 2 spec lives at `_track2-saas/SOLUTION.md` and Track 1 packages (`@one/aimeter-parsers`, `@one/aimeter-pricing`) are extracted from the extension and published to npm to be reused by the SaaS.
+
+Until triggered, **the SaaS spec is frozen.** No work on Keycloak realms, Temporal workflows, OpenFGA models, or any of it.
 
 ---
 
-## 25. CLAUDE.md scaffolds
+## 23. CLAUDE.md scaffolds
 
-### `/CLAUDE.md`
+### `/CLAUDE.md` (root)
+See the separate `CLAUDE.md` file in the authoritative document set.
+
+### `src/parsers/CLAUDE.md`
 ```md
-# AIMeter — Project Contract
+Each parser implements JsonlParser from base.ts. Add ≥3 anonymized fixtures
+in /fixtures/<agent>/ and tests asserting exact normalized output.
 
-Read first: HANDOVER.md, then SOLUTION.md.
+Forbidden-field policy is a P0 invariant: parsers MUST NEVER return
+fields that could contain source code, prompts, or completions. The test
+no-forbidden-fields.test.ts enforces this against the strict zod schema.
 
-This is a pnpm monorepo. Apps live in `apps/`, shared libraries in `packages/`.
-Never modify a committed migration. Never add a runtime dep without explicit ask.
-Strict TypeScript. Zod-validate every external input. Conventional Commits.
-
-When working on:
-- `apps/web` → see `apps/web/CLAUDE.md`
-- `apps/cli` → see `apps/cli/CLAUDE.md`
-- `packages/parsers` → see `packages/parsers/CLAUDE.md`
-- `packages/db` → see `packages/db/CLAUDE.md`
+Tolerate missing optional fields by treating them as 0. Tolerate dated
+model suffixes (-20251001) by stripping them before catalog lookup.
 ```
 
-### `apps/web/CLAUDE.md`
+### `src/store/CLAUDE.md`
 ```md
-Next.js 15 App Router. Tailwind 4. shadcn/ui. Clerk for auth.
-Server Components by default. Use Server Actions only for Client Component
-forms; otherwise prefer Route Handlers under `app/api/`.
-Validate every body and query with zod. Use the `env` helper in `lib/env.ts`.
-Never log API keys, tokens, or PII beyond email.
+Append-only JSONL per month. NEVER edit a previous line. Dedup at append-time
+via the in-memory id index. Atomic writes only (fs.appendFile with flag 'a').
+
+The store schema is the source of truth in schema.ts. Bump schemaVersion
+in meta.json and add a migration in migrations.ts when changing event shape.
 ```
 
-### `apps/cli/CLAUDE.md`
+### `src/pricing/CLAUDE.md`
 ```md
-Commander-based CLI. Pure JS deps only — no native modules (we ship to all OS).
-Use chokidar with awaitWriteFinish. Treat the user's filesystem as untrusted:
-catch every read error and continue. Never read source code or prompt content.
-Default config: ~/.infoc-aimeter/config.json, mode 0600.
+Cost is ALWAYS estimated. Never claim "matches provider billing."
+Snapshot the rates in pricingSnapshot at compute time so historical
+totals stay stable when the catalog updates.
+
+Confidence: high if catalog verifiedAt ≤ 30d OR user override; medium if
+≤ 90d; low otherwise. No catalog match → cost 0, confidence low.
 ```
 
-### `packages/parsers/CLAUDE.md`
+### `src/ui/webview/CLAUDE.md`
 ```md
-Each parser implements JsonlParser from `base.ts`. Add a fixture in
-`fixtures/<agent>/v<version>.jsonl` and a test asserting the exact
-normalized UsageEvent[] output. Tolerate missing fields (treat as 0).
-Drop any field that could contain source code, prompts, or completions.
-```
-
-### `packages/db/CLAUDE.md`
-```md
-Drizzle ORM. Schema is the source of truth in `src/schema.ts`.
-Generate migrations with `pnpm db:generate`. Never edit a committed migration.
-All queries live in `src/queries/<table>.ts` and return typed results.
+Vanilla TypeScript only — no React, no Preact in v1. SVG charts hand-rolled.
+Strict CSP: nonce-based scripts, no inline event handlers.
+ext ↔ webview messages zod-validated on both sides.
+Light/dark theme via VS Code CSS vars (var(--vscode-foreground) etc).
 ```
 
 ---
 
-## 26. Definition of done
-
-Self-verify before declaring a milestone complete.
+## 24. Definition of done
 
 ### Repo health
-- [ ] `pnpm install --frozen-lockfile` succeeds on fresh clone with Node 22.11.
-- [ ] `pnpm typecheck` exits 0.
-- [ ] `pnpm lint` exits 0.
-- [ ] `pnpm test` exits 0 with coverage thresholds met.
-- [ ] `pnpm build` exits 0.
+- [ ] `pnpm install --frozen-lockfile` succeeds on fresh clone with Node 22.11
+- [ ] `pnpm typecheck`, `pnpm lint`, `pnpm test`, `pnpm test:vscode`, `pnpm license:check`, `pnpm build` all exit 0
+- [ ] `pnpm pricing:check` exit 0 (catalog ≤ 30d)
+- [ ] CI green on `main`
+- [ ] No banned tech imported (no Stripe, no telemetry SDK, no backend libs)
 
-### Functional (Phase 1 final)
-- [ ] Visit `infoc.one` → marketing page, no console errors.
-- [ ] Click "Get early access" → Stripe Checkout opens.
-- [ ] Complete Checkout (test card) → land on `/onboarding`.
-- [ ] Create org, invite teammate, complete onboarding.
-- [ ] Run `npm i -g @infoc/aimeter-cli && aimeter init` on a real laptop with Claude Code installed.
-- [ ] Browser opens to `cli-auth`, complete the flow.
-- [ ] `aimeter doctor` → all checks pass for at least one agent.
-- [ ] `aimeter start` → run a real Claude Code session for 5 minutes.
-- [ ] Within 90s of session end, events appear on `/dashboard`.
-- [ ] Per-user table shows attribution.
-- [ ] `/api/orgs/:id/export.csv` downloads non-empty CSV with correct headers.
-- [ ] Connect Slack from settings → OAuth completes → channel picker shows public channels.
-- [ ] Manually trigger digest → message arrives in chosen channel within 5s.
-- [ ] Inflate one user's spend programmatically → anomaly alert fires within 4h.
-- [ ] Revoke API key from settings → next CLI flush returns 401, CLI logs auth error, exits 4.
-- [ ] Trial ends after 14 days → org transitions to paused if no payment method.
-- [ ] First paying customer is onboarded white-glove and uses the product unaided for 7 days.
+### Functional
+- [ ] Extension installs from a `.vsix` into a clean VS Code profile without errors
+- [ ] Activation finishes < 1 s
+- [ ] Status bar shows accurate "today" figure within 60 s of an AI session
+- [ ] Sidebar dashboard renders in < 500 ms
+- [ ] Window picker switches data instantly
+- [ ] Confidence dots correct on all cost figures
+- [ ] CSV export contains expected columns and matches dashboard totals
+- [ ] Clear Data wipes events and resets UI to empty state
+- [ ] Doctor reports accurate path / parse / catalog status
+- [ ] Settings changes (intervals, paths, overrides) take effect without restart
+- [ ] Light + dark theme both render correctly
 
-### Operational
-- [ ] All required env vars documented in `.env.example`.
-- [ ] Sentry receives a deliberately-thrown error from each app (web, CLI, slack-bot).
-- [ ] Axiom shows logs from the last 24h.
-- [ ] Vercel preview deploy works on PR.
-- [ ] CLI release pipeline tested with a `cli-v0.1.0-rc.1` tag.
-- [ ] CI on main is green.
+### Privacy
+- [ ] No-network integration test passes (zero outbound HTTP during 60-s activation cycle)
+- [ ] Forbidden-field test passes (no parser leaks source code / prompts / completions)
+- [ ] Privacy promises in §14 verified by reading the code
+- [ ] No `installId`, `clientId`, or any local identifier ever appears in any HTTP body — verified by network test
 
 ### Documentation
-- [ ] `README.md` has install + run instructions.
-- [ ] `HANDOVER.md` reflects the AIMeter / `infoc.one` rename.
-- [ ] `SOLUTION.md` has every `[ASSUMPTION: …]` resolved or explicitly accepted.
-- [ ] Every directory has a `CLAUDE.md`.
-- [ ] At least one user-facing doc page exists at `/docs/install`.
+- [ ] `README.md` final, doubles as Marketplace listing
+- [ ] `HANDOVER.md`, `SOLUTION.md`, `CLAUDE.md`, `DECISIONS.md` consistent
+- [ ] `CHANGELOG.md` has v0.1.0 entry
+- [ ] `LICENSES.md` lists every dependency + license
+- [ ] Per-directory `CLAUDE.md` files in `src/parsers/`, `src/store/`, `src/pricing/`, `src/ui/webview/`
 
-### Security / privacy
-- [ ] API keys stored as sha256, never plaintext.
-- [ ] Slack bot tokens encrypted at rest (AES-256-GCM).
-- [ ] Webhook signatures verified for Stripe, Clerk, Slack.
-- [ ] No source code, prompts, or completions ever leave developer's machine — verified by parser unit tests.
-- [ ] CSP headers set on all pages.
-- [ ] HTTPS only; HSTS preload submitted.
+### Marketplace
+- [ ] Icon, banner, screenshots all present in `media/`
+- [ ] `package.json` manifest validates via `vsce ls` without warnings
+- [ ] Listing description, keywords, categories sensible
+- [ ] Marketing page at `aimeter.infoc.one` live and links to Marketplace
+- [ ] Published to both VS Code Marketplace and Open VSX
 
-When all boxes check, Phase 1 is done.
+### Track-2 readiness
+- [ ] `_track2-saas/` archive intact and untouched during Track 1 build
+- [ ] Track-2 trigger criteria documented in §22
+- [ ] Track-1 packages structured so `parsers/` and `pricing/` can be extracted to npm packages later without code changes
 
----
-
-## 27. Assumptions index
-
-Every `[ASSUMPTION: …]` in this document, listed for easy override:
-
-1. § 3 — Latest-stable versions of all deps as of 5 May 2026; bump if newer compatible.
-2. § 3 — Axiom for logs; could swap for Highlight or Better Stack.
-3. § 4 — License is proprietary, not open source, in v1.
-4. § 7 — Rate limit enforcement (in-memory now, Redis later).
-5. § 8 — Email + magic-link sign-in only; defer Google / SSO.
-6. § 9 — Homebrew/Scoop CLI distribution deferred to Phase 2.
-7. § 10 — Gemini CLI exact log path/schema needs verification at build time.
-8. § 10 — Anthropic billing API endpoint shape needs verification at build time.
-9. § 11 — Pricing snapshot is 5 May 2026; verify before launch.
-10. § 12 — Inter font; replace if brand guide differs.
-11. § 14 — Bot icon asset to be designed.
-12. § 15 — Annual price 17% discount; defer to Phase 2.
-13. § 15 — 14-day trial without card.
-14. § 18 — Postgres testcontainer for integration tests; defer if too slow.
-15. § 18 — Playwright deferred to Phase 2.
-16. § 22 — Founder personally takes Calendly calls in Phase 0.
-17. § 23 — TOS/Privacy from a template; lawyer review later.
-
-Override any assumption by editing this file and committing before starting work.
+When all boxes are checked, Phase 1 is done.
 
 ---
 
-*Last updated: 5 May 2026.*
+## 25. Assumptions index
+
+1. § 3 — Latest stable versions of all deps as of 5 May 2026; bump if newer compatible exists at start.
+2. § 3 — Vanilla TypeScript in webview is sufficient; reach for Preact only if Phase 2 complexity requires it.
+3. § 4 — License is MIT for the extension; double-check this aligns with company policy before publish.
+4. § 9 — Gemini CLI exact log location and JSONL schema verified at the start of Milestone 3 (the schema may have changed since the SaaS spec was drafted).
+5. § 20 — Marketing page is plain HTML + Tailwind CDN, deployed to Cloudflare Pages or similar, separate from extension repo.
+6. § 22 — Track-2 trigger thresholds (1,000 WAU / 5 inbound / 1 paid invoice) are working assumptions; founder may adjust.
+
+Override any assumption by editing this file before starting work.
+
+---
+
+*Last updated: 5 May 2026 — Track 1 v1*
 
 ## Changelog
 
-- **2026-05-05** — Audit + gaps + autopilot-grade rewrite. Renamed product to AIMeter; domain to infoc.one. Added: env contract, full schema with enums and indexes, complete API contracts, CLI command spec, parser specs with fixtures, pricing table, web route map, Inngest functions, Slack/Stripe specs, error/log/test/CI policies, build commands, Phase 0 landing copy, milestone acceptance criteria, CLAUDE.md scaffolds, Definition of Done, assumptions index.
+- **2026-05-05 Track-1 v1.1** — Pre-build patches: Marketplace publisher ID and extension ID corrected (publisher ID `infoc-one`, display name `INFOC ONE`, extension ID `infoc-one.aimeter` — was incorrectly `infoc.one.aimeter`); Milestone 0 added as mandatory non-coding namespace-lock milestone; mission language softened from "accurate" to "best-effort estimated"; explicit publisher-ID-vs-display-name distinction documented per VS Code Marketplace requirements.
+- **2026-05-05 Track-1 v1** — Initial Track-1 spec for the VS Code extension. Free forever, no Pro tier, no payment logic, no telemetry, no backend. Repo `aimeter-infoc-one/`. Track-2 SaaS spec archived in `_track2-saas/`.

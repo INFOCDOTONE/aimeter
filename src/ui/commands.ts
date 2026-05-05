@@ -2,12 +2,14 @@ import * as vscode from 'vscode';
 import type { Logger } from '../lib/logger.js';
 import type { LocalEventStore } from '../store/persistence.js';
 import type { AIMeterStatusBar } from './status-bar.js';
+import type { AIMeterDashboardProvider } from './webview/panel.js';
 
 export function registerCommands(options: {
   context: vscode.ExtensionContext;
   logger: Logger;
   store: LocalEventStore;
   statusBar: AIMeterStatusBar;
+  dashboardProvider: AIMeterDashboardProvider;
 }): void {
   options.context.subscriptions.push(
     vscode.commands.registerCommand('aimeter.openDashboard', () => {
@@ -15,6 +17,7 @@ export function registerCommands(options: {
     }),
     vscode.commands.registerCommand('aimeter.refresh', async () => {
       await options.statusBar.refresh();
+      await options.dashboardProvider.refresh();
     }),
     vscode.commands.registerCommand('aimeter.openLogs', () => {
       options.logger.show();
@@ -28,6 +31,7 @@ export function registerCommands(options: {
       if (answer === 'Clear data') {
         await options.store.clear();
         options.statusBar.showNoData();
+        await options.dashboardProvider.refresh();
       }
     }),
     vscode.commands.registerCommand('aimeter.exportCsv', () => {
