@@ -52,7 +52,11 @@ export function estimateCost(
     }, 'override');
   }
 
-  const entry = catalog.find((candidate) => candidate.model === normalized);
+  // Exact match, then fallback: strip trailing minor version (e.g. -6 in claude-sonnet-4-6)
+  const withoutMinor = normalized.replace(/-\d{1,2}$/, '');
+  const entry =
+    catalog.find((candidate) => candidate.model === normalized) ??
+    (withoutMinor !== normalized ? catalog.find((candidate) => candidate.model === withoutMinor) : undefined);
 
   if (!entry) {
     return {
