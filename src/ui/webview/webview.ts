@@ -17,309 +17,579 @@ window.addEventListener('message', (event: MessageEvent<unknown>) => {
         renderError('AIMeter received an invalid dashboard message.');
         return;
     }
-
-    if (parsed.data.type === 'error') {
-        renderError(parsed.data.message);
-        return;
-    }
-
-    if (parsed.data.type === 'doctor-result') {
-        renderDoctor(parsed.data.payload);
-        return;
-    }
-
+    if (parsed.data.type === 'error') { renderError(parsed.data.message); return; }
+    if (parsed.data.type === 'doctor-result') { renderDoctor(parsed.data.payload); return; }
     activeWindow = parsed.data.payload.window;
     renderDashboard(parsed.data.payload);
 });
 
+// ─── Main render ───────────────────────────────────────────────────────────
+
 function renderDashboard(data: WindowDataPayload): void {
-    if (app === null) {
-        return;
-    }
-
-    app.replaceChildren(
-        header(data),
-        windowPicker(data.window),
-        dashboardActions(),
-        data.hasEvents ? summaryCards(data) : emptyState(),
-    );
-
-    if (!data.hasEvents) {
-        return;
-    }
-
-    app.append(trendPanel(data), agentPanel(data), modelPanel(data), sessionsPanel(data));
-}
-
-function header(data: WindowDataPayload): HTMLElement {
-    const container = element('div', 'title');
-    container.append(element('h1', undefined, 'AIMeter'));
-    container.append(element('span', 'muted', `Updated ${formatTime(data.generatedAt)}`));
-    return container;
-}
-
-function windowPicker(window: WindowKey): HTMLElement {
-    const container = element('div', 'picker');
-    const windows: Array<{ key: WindowKey; label: string }> = [
-        { key: 'today', label: 'Today' },
-        { key: '7d', label: '7d' },
-        { key: '30d', label: '30d' },
+    if (!app) return;
+    const nodes: Node[] = [
+        renderHeader(data),
+        renderTabs(data.window),
+        renderActions(),
     ];
 
-    for (const item of windows) {
-        const button = element('button', item.key === window ? undefined : 'secondary', item.label);
-        button.setAttribute('type', 'button');
-        button.setAttribute('aria-pressed', String(item.key === window));
-        button.addEventListener('click', () => {
-            requestWindow(item.key);
-        });
-        container.append(button);
+    if (!data.hasEvents) {
+        nodes.push(renderEmpty());
+    } else {
+        nodes.push(
+            renderHeroSection(data),
+            renderCompositionBar(data.totals),
+            renderTrendPanel(data),
+            renderAgentPanel(data),
+            renderModelPanel(data),
+            renderSessionsPanel(data),
+        );
     }
+    app.replaceChildren(...nodes);
+}
 
+// ─── Header ────────────────────────────────────────────────────────────────
+
+function renderHeader(data: WindowDataPayload): HTMLElement {
+    const container = div('header');
+    container.append(h('h1', undefined, 'AIMeter'));
+    container.append(span('muted text-xs', `Updated ${fmtRelative(data.generatedAt)}`));
     return container;
 }
 
-function summaryCards(data: WindowDataPayload): HTMLElement {
-    const container = element('section', 'cards');
-    container.append(
-        summaryCard('Tokens', formatNumber(data.totals.tokens), tokenDetail(data)),
-        summaryCard(
-            'Estimated cost',
-            `${confidenceDot(data.totals.costConfidence)}${formatUsd(data.totals.costUsdEstimated)}`,
-            `${data.totals.costConfidence} confidence`,
-        ),
-        summaryCard('Events', formatNumber(data.totals.eventCount), `${data.recentSessions.length} sessions`),
+// ─── Window tabs ───────────────────────────────────────────────────────────
+
+function renderTabs(current: WindowKey): HTMLElement {
+    const container = div('tabs');
+    const opts: Array<{ key: WindowKey; label: string }> = [
+        { key: 'today', label: 'Today' },
+        { key: '7d', label: '7 days' },
+        { key: '30d', label: '30 days' },
+    ];
+    for (const { key, label } of opts) {
+        const btn = el<HTMLButtonElement>('button', key === current ? 'tab active' : 'tab', label);
+        btn.type = 'button';
+        btn.setAttribute('aria-pressed', String(key === current));
+        btn.addEventListener('click', () => requestWindow(key));
+        container.append(btn);
+    }
+    return container;
+}
+
+// ─── Actions ───────────────────────────────────────────────────────────────
+
+function renderActions(): HTMLElement {
+    const container = div('actions');
+    container.append(actionBtn('Export CSV', 'export-csv'), actionBtn('Doctor', 'run-doctor'));
+    return container;
+}
+
+// ─── Hero section ──────────────────────────────────────────────────────────
+
+function renderHeroSection(data: WindowDataPayload): HTMLElement {
+    const { totals } = data;
+
+    // Two big metric cards
+    const hero = div('hero');
+
+    // Tokens card
+    const tokensCard = div('metric-card');
+    tokensCard.append(p('metric-label', 'Total tokens'));
+    const tokensVal = div('metric-value mono');
+    tokensVal.textContent = fmtTokens(totals.tokens);
+    tokensCard.append(tokensVal, p('metric-detail', `${fmtTokens(totals.inputTokens)} in · ${fmtTokens(totals.outputTokens)} out`));
+
+    // Cost card
+    const costCard = div('metric-card');
+    costCard.append(p('metric-label', 'Estimated cost'));
+    const costVal = div('metric-value mono');
+    costVal.innerHTML = `${confDot(totals.costConfidence)}${fmtUsd(totals.costUsdEstimated)}`;
+    const rate = totals.tokens > 0
+        ? `$${((totals.costUsdEstimated / totals.tokens) * 1_000_000).toFixed(4)}/1M tokens`
+        : `${totals.costConfidence} confidence`;
+    costCard.append(costVal, p('metric-detail', rate));
+
+    hero.append(tokensCard, costCard);
+
+    // Secondary meta row
+    const meta = div('meta-row');
+    meta.append(
+        metaItem(String(totals.eventCount), 'events'),
+        metaItem(String(data.recentSessions.length), 'sessions'),
+        metaItem(fmtTokens(totals.cacheReadTokens), 'cache hits'),
     );
-    return container;
+
+    const section = div();
+    section.style.cssText = 'display:grid;gap:6px';
+    section.append(hero, meta);
+    return section;
 }
 
-function summaryCard(title: string, valueHtml: string, detail: string): HTMLElement {
-    const card = element('article', 'card');
-    card.append(element('h2', undefined, title));
-    const value = element('div', 'card-value');
-    value.innerHTML = valueHtml;
-    card.append(value, element('p', 'muted', detail));
-    return card;
+function metaItem(value: string, label: string): HTMLElement {
+    const item = div('meta-item');
+    item.append(span('meta-value', value), span('meta-label', label));
+    return item;
 }
 
-function emptyState(): HTMLElement {
-    const container = element('section', 'empty');
-    container.append(
-        element('h2', undefined, 'No events yet'),
-        element('p', 'muted', 'AIMeter watches local JSONL session logs and shows data here after an AI session is recorded.'),
-    );
-    const actions = element('div', 'actions');
-    actions.append(actionButton('Run Doctor', 'run-doctor'), actionButton('Open Settings', 'open-settings'));
-    container.append(actions);
-    return container;
-}
+// ─── Token composition bar ─────────────────────────────────────────────────
 
-function dashboardActions(): HTMLElement {
-    const actions = element('div', 'actions');
-    actions.append(actionButton('Export CSV', 'export-csv'), actionButton('Run Doctor', 'run-doctor'));
-    return actions;
-}
+function renderCompositionBar(totals: WindowDataPayload['totals']): HTMLElement {
+    const wrap = div('comp-wrap');
+    const total = totals.tokens;
+    if (total === 0) return wrap;
 
-function renderDoctor(result: DoctorResult): void {
-    if (app === null) {
-        return;
+    const segments = [
+        { name: 'Input',    value: totals.inputTokens,      cls: 'seg-input comp-dot' },
+        { name: 'Output',   value: totals.outputTokens,     cls: 'seg-output comp-dot' },
+        { name: 'Cache↩',  value: totals.cacheReadTokens,  cls: 'seg-cache-r comp-dot' },
+        { name: 'Cache↑',  value: totals.cacheWriteTokens, cls: 'seg-cache-w comp-dot' },
+    ].filter((s) => s.value > 0);
+
+    const bar = div('comp-bar');
+    for (const seg of segments) {
+        const fill = div(`comp-seg ${seg.cls.split(' ')[0] ?? ''}`);
+        fill.style.width = `${(seg.value / total) * 100}%`;
+        fill.title = `${seg.name}: ${fmtTokens(seg.value)} (${pct(seg.value, total)}%)`;
+        bar.append(fill);
     }
 
-    const panel = element('section', 'panel');
-    panel.append(element('h2', undefined, 'Doctor'));
-    panel.append(element('p', 'muted', `Updated ${formatTime(result.generatedAt)}`));
-
-    for (const check of result.checks) {
-        const item = element('article', `session doctor-${check.severity}`);
-        item.append(element('strong', undefined, check.name), element('span', 'muted', check.message));
-        panel.append(item);
+    const legend = div('comp-legend');
+    for (const seg of segments) {
+        const item = div('comp-item');
+        const dot = span(`comp-dot ${seg.cls.split(' ')[0] ?? ''}`);
+        item.append(dot, document.createTextNode(`${seg.name} ${pct(seg.value, total)}%`));
+        legend.append(item);
     }
 
-    const actions = element('div', 'actions');
-    actions.append(actionButton('Back to Dashboard', 'request-dashboard'), actionButton('Open Settings', 'open-settings'));
-    app.replaceChildren(headerForDoctor(result), actions, panel);
+    wrap.append(bar, legend);
+    return wrap;
 }
 
-function headerForDoctor(result: DoctorResult): HTMLElement {
-    const container = element('div', 'title');
-    const errors = result.checks.filter((check) => check.severity === 'error').length;
-    const warnings = result.checks.filter((check) => check.severity === 'warn').length;
-    container.append(element('h1', undefined, 'AIMeter'), element('span', 'muted', `${errors} errors · ${warnings} warnings`));
-    return container;
+function pct(value: number, total: number): string {
+    const pc = (value / total) * 100;
+    return pc >= 1 ? pc.toFixed(0) : pc.toFixed(1);
 }
 
-function trendPanel(data: WindowDataPayload): HTMLElement {
-    const panel = element('section', 'panel');
-    panel.append(element('h2', undefined, 'Daily trend'));
-    panel.append(renderTrendSvg(data));
+// ─── Trend chart ───────────────────────────────────────────────────────────
+
+function renderTrendPanel(data: WindowDataPayload): HTMLElement {
+    const panel = div('panel');
+    panel.append(p('section-head', 'Daily trend'));
+    const wrap = div('chart-wrap');
+    wrap.append(renderTrendSvg(data));
+    panel.append(wrap);
     return panel;
 }
 
 function renderTrendSvg(data: WindowDataPayload): SVGSVGElement {
-    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-    svg.setAttribute('viewBox', '0 0 600 160');
-    svg.setAttribute('role', 'img');
-    svg.setAttribute('aria-label', 'Daily token trend');
-    const maxTokens = Math.max(1, ...data.daily.map((day) => day.tokens));
-    const barWidth = 520 / Math.max(1, data.daily.length);
+    const W = 600, H = 180;
+    const PL = 46, PR = 6, PT = 8, PB = 28;
+    const cW = W - PL - PR;
+    const cH = H - PT - PB;
 
-    data.daily.forEach((day, index) => {
-        const height = Math.max(2, (day.tokens / maxTokens) * 112);
-        const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
-        rect.setAttribute('x', String(44 + index * barWidth));
-        rect.setAttribute('y', String(126 - height));
-        rect.setAttribute('width', String(Math.max(3, barWidth - 4)));
-        rect.setAttribute('height', String(height));
+    const svg = svgEl<SVGSVGElement>('svg');
+    svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+    svg.setAttribute('role', 'img');
+    svg.setAttribute('aria-label', 'Daily token usage trend');
+
+    const days = data.daily;
+    const maxT = Math.max(1, ...days.map((d) => d.tokens));
+    const bw = cW / Math.max(days.length, 1);
+    const gap = Math.max(1, bw * 0.18);
+    const today = new Date().toISOString().slice(0, 10);
+
+    // Grid lines + y-axis labels
+    for (const frac of [0.25, 0.5, 0.75, 1.0]) {
+        const y = PT + cH * (1 - frac);
+
+        const line = svgEl<SVGLineElement>('line');
+        line.setAttribute('x1', String(PL));
+        line.setAttribute('x2', String(PL + cW));
+        line.setAttribute('y1', String(y));
+        line.setAttribute('y2', String(y));
+        line.setAttribute('stroke', 'var(--vscode-editorWidget-border,rgba(128,128,128,.15))');
+        line.setAttribute('stroke-width', '0.5');
+        svg.append(line);
+
+        const lab = svgText(PL - 3, y + 3.5, fmtTokensCompact(maxT * frac));
+        lab.setAttribute('text-anchor', 'end');
+        svg.append(lab);
+    }
+
+    // Bars
+    days.forEach((day, i) => {
+        const barH = Math.max(2, (day.tokens / maxT) * cH);
+        const x = PL + i * bw + gap / 2;
+        const w = Math.max(2, bw - gap);
+        const y = PT + cH - barH;
+        const isToday = day.date === today;
+
+        const rect = svgEl<SVGRectElement>('rect');
+        rect.setAttribute('x', String(x));
+        rect.setAttribute('y', String(y));
+        rect.setAttribute('width', String(w));
+        rect.setAttribute('height', String(barH));
         rect.setAttribute('rx', '2');
-        rect.setAttribute('fill', 'var(--vscode-charts-blue)');
-        rect.append(svgTitle(`${day.date}: ${formatNumber(day.tokens)} tokens`));
+        rect.setAttribute('fill', 'var(--vscode-charts-blue,#4FC3F7)');
+        rect.setAttribute('opacity', isToday ? '1' : '0.55');
+
+        const title = svgEl<SVGTitleElement>('title');
+        title.textContent = `${day.date}: ${fmtTokens(day.tokens)} tokens · ${fmtUsd(day.costUsdEstimated)} est`;
+        rect.append(title);
         svg.append(rect);
     });
 
-    svg.append(svgText(12, 18, formatNumber(maxTokens)), svgText(12, 130, '0'));
+    // X-axis date labels
+    const showEvery = days.length <= 7 ? 1 : days.length <= 14 ? 2 : 5;
+    days.forEach((day, i) => {
+        if (i % showEvery !== 0 && i !== days.length - 1) return;
+        const cx = PL + i * bw + bw / 2;
+        const isToday = day.date === today;
+        const d = new Date(`${day.date}T12:00:00`);
+        const label = isToday
+            ? 'Today'
+            : new Intl.DateTimeFormat(undefined, { month: 'numeric', day: 'numeric' }).format(d);
+
+        const t = svgText(cx, H - 4, label);
+        t.setAttribute('text-anchor', 'middle');
+        if (isToday) t.setAttribute('font-weight', '600');
+        svg.append(t);
+    });
+
     return svg;
 }
 
-function agentPanel(data: WindowDataPayload): HTMLElement {
-    const panel = element('section', 'panel');
-    panel.append(element('h2', undefined, 'By agent'));
-    panel.append(...breakdownRows(data.byAgent, data.totals.tokens));
+// ─── Agent breakdown ───────────────────────────────────────────────────────
+
+function renderAgentPanel(data: WindowDataPayload): HTMLElement {
+    const panel = div('panel');
+    panel.append(p('section-head', 'By agent'));
+
+    if (data.byAgent.length === 0) {
+        panel.append(span('muted text-sm', 'No agent data'));
+        return panel;
+    }
+
+    const maxT = Math.max(1, ...data.byAgent.map((a) => a.tokens));
+    for (const agent of data.byAgent) {
+        const row = div('agent-row');
+
+        const labelEl = div('agent-label');
+        const dot = span('agent-dot');
+        dot.style.background = agentColor(agent.id);
+        labelEl.append(dot, document.createTextNode(agent.label));
+
+        const track = div('agent-track');
+        const fill = div('agent-fill');
+        fill.style.width = `${Math.max(2, (agent.tokens / maxT) * 100)}%`;
+        fill.style.background = agentColor(agent.id);
+        track.append(fill);
+
+        const stats = div('agent-stats');
+        const tokensEl = span('tokens', fmtTokens(agent.tokens));
+        const costEl = div('cost');
+        costEl.innerHTML = `${confDot(agent.costConfidence)}${fmtUsd(agent.costUsdEstimated)}`;
+        stats.append(tokensEl, costEl);
+
+        row.append(labelEl, track, stats);
+        panel.append(row);
+    }
+
     return panel;
 }
 
-function modelPanel(data: WindowDataPayload): HTMLElement {
-    const panel = element('section', 'panel');
-    panel.append(element('h2', undefined, 'By model'));
-    const table = element('table');
-    const headerRow = element('tr');
-    headerRow.append(element('th', undefined, 'Model'), element('th', undefined, 'Tokens'), element('th', undefined, 'Cost'), element('th', undefined, 'Events'));
-    const thead = element('thead');
-    thead.append(headerRow);
-    const tbody = element('tbody');
+// ─── Model table ───────────────────────────────────────────────────────────
+
+function renderModelPanel(data: WindowDataPayload): HTMLElement {
+    const panel = div('panel');
+    panel.append(p('section-head', 'By model'));
+
+    if (data.byModel.length === 0) {
+        panel.append(span('muted text-sm', 'No model data'));
+        return panel;
+    }
+
+    const table = el<HTMLTableElement>('table');
+    const thead = el<HTMLTableSectionElement>('thead');
+    const hrow = el<HTMLTableRowElement>('tr');
+    hrow.append(th('Model'), th('Tokens'), th('Cost'), th('Events'));
+    thead.append(hrow);
+
+    const tbody = el<HTMLTableSectionElement>('tbody');
     for (const model of data.byModel) {
-        const row = element('tr');
-        const cost = element('td');
-        cost.innerHTML = `${confidenceDot(model.costConfidence)}${formatUsd(model.costUsdEstimated)}`;
+        const row = el<HTMLTableRowElement>('tr');
+
+        const nameTd = el<HTMLTableCellElement>('td');
+        nameTd.append(
+            div('model-name', fmtModel(model.label || model.id)),
+            span('model-provider muted', modelProvider(model.id)),
+        );
+
+        const costTd = el<HTMLTableCellElement>('td');
+        costTd.innerHTML = `${confDot(model.costConfidence)}${fmtUsd(model.costUsdEstimated)}`;
+
         row.append(
-            element('td', undefined, model.label),
-            element('td', undefined, formatNumber(model.tokens)),
-            cost,
-            element('td', undefined, formatNumber(model.eventCount)),
+            nameTd,
+            td(fmtTokensCompact(model.tokens)),
+            costTd,
+            td(String(model.eventCount)),
         );
         tbody.append(row);
     }
+
     table.append(thead, tbody);
     panel.append(table);
     return panel;
 }
 
-function sessionsPanel(data: WindowDataPayload): HTMLElement {
-    const panel = element('section', 'panel');
-    panel.append(element('h2', undefined, 'Recent sessions'));
-    const list = element('div', 'session-list');
-    for (const session of data.recentSessions) {
-        const item = element('article', 'session');
-        item.append(
-            element('strong', undefined, session.projectSlug),
-            element('span', 'muted', `${formatTime(session.latestAt)} · ${session.agents.join(', ')} · ${session.models.join(', ')}`),
-            element('span', undefined, `${formatNumber(session.tokens)} tokens · ${formatUsd(session.costUsdEstimated)} estimated`),
+function modelProvider(modelId: string): string {
+    if (modelId.startsWith('claude')) return 'Anthropic';
+    if (modelId.startsWith('gpt') || modelId.startsWith('o4') || modelId.startsWith('o3')) return 'OpenAI';
+    if (modelId.startsWith('gemini')) return 'Google';
+    return '';
+}
+
+// ─── Sessions list ─────────────────────────────────────────────────────────
+
+function renderSessionsPanel(data: WindowDataPayload): HTMLElement {
+    const panel = div('panel');
+    panel.append(p('section-head', `Recent sessions · ${data.recentSessions.length}`));
+
+    if (data.recentSessions.length === 0) {
+        panel.append(span('muted text-sm', 'No sessions'));
+        return panel;
+    }
+
+    const list = div('session-list');
+    for (const session of data.recentSessions.slice(0, 20)) {
+        const item = div('session');
+
+        const project = div('session-project ellipsis');
+        project.textContent = fmtSlug(session.projectSlug);
+        project.title = session.projectSlug;
+
+        const meta = div('session-meta');
+        meta.append(
+            span('', fmtRelative(session.latestAt)),
+            span('', session.agents.map(agentShort).join(', ')),
+            span('', session.models.map((m) => fmtModel(m)).join(', ')),
         );
+
+        const tokens = div('session-tokens');
+        tokens.innerHTML = `${fmtTokens(session.tokens)} tokens · ${confDot(session.costConfidence)}${fmtUsd(session.costUsdEstimated)} est`;
+
+        item.append(project, meta, tokens);
         list.append(item);
     }
+
     panel.append(list);
     return panel;
 }
 
-function breakdownRows(items: WindowDataPayload['byAgent'], maxTokens: number): HTMLElement[] {
-    return items.map((item) => {
-        const row = element('div', 'bar-row');
-        const track = element('div', 'bar-track');
-        const fill = element('div', 'bar-fill');
-        fill.style.width = `${Math.max(3, (item.tokens / Math.max(1, maxTokens)) * 100)}%`;
-        track.append(fill);
-        const cost = element('span');
-        cost.innerHTML = `${confidenceDot(item.costConfidence)}${formatUsd(item.costUsdEstimated)}`;
-        row.append(element('span', undefined, item.label), track, cost);
-        return row;
-    });
+// ─── Empty state ───────────────────────────────────────────────────────────
+
+function renderEmpty(): HTMLElement {
+    const container = div('empty');
+    container.append(
+        h('h2', undefined, 'No events yet'),
+        p('muted text-sm', 'Run an AI coding session — AIMeter will pick it up automatically.'),
+        p('text-sm', 'Watching for session logs from:'),
+    );
+
+    const list = el<HTMLUListElement>('ul', 'watcher-list');
+    for (const { name, path } of [
+        { name: 'Claude Code', path: '~/.claude/projects' },
+        { name: 'Codex CLI',   path: '~/.codex/sessions' },
+        { name: 'Gemini CLI',  path: '~/.gemini/sessions' },
+    ]) {
+        const li = el<HTMLLIElement>('li', 'watcher-row');
+        li.append(span('watcher-name', name));
+        const code = el<HTMLElement>('code');
+        code.textContent = path;
+        li.append(code);
+        list.append(li);
+    }
+
+    const actions = div('actions');
+    actions.append(actionBtn('Run Doctor', 'run-doctor'), actionBtn('Open Settings', 'open-settings'));
+
+    container.append(list, actions);
+    return container;
 }
 
-function actionButton(
-    label: string,
-    type: 'export-csv' | 'run-doctor' | 'open-settings' | 'request-dashboard',
-): HTMLButtonElement {
-    const button = element('button', undefined, label);
-    button.setAttribute('type', 'button');
-    button.addEventListener('click', () => {
-        if (type === 'request-dashboard') {
-            requestWindow(activeWindow);
-            return;
-        }
-        vscode.postMessage({ type });
-    });
-    return button;
+// ─── Doctor view ───────────────────────────────────────────────────────────
+
+function renderDoctor(result: DoctorResult): void {
+    if (!app) return;
+
+    const errors = result.checks.filter((c) => c.severity === 'error').length;
+    const warns  = result.checks.filter((c) => c.severity === 'warn').length;
+
+    const header = div('header');
+    header.append(h('h1', undefined, 'Doctor'), span('muted text-xs', `${errors} errors · ${warns} warnings`));
+
+    const panel = div('panel');
+    for (const check of result.checks) {
+        const item = div(`doctor-item doctor-${check.severity}`);
+        item.append(el('strong', undefined, check.name), p('muted text-xs', check.message));
+        panel.append(item);
+    }
+
+    const actions = div('actions');
+    actions.append(actionBtn('Back', 'request-dashboard'), actionBtn('Settings', 'open-settings'));
+
+    app.replaceChildren(header, actions, panel);
 }
+
+// ─── Error view ────────────────────────────────────────────────────────────
+
+function renderError(message: string): void {
+    if (!app) return;
+    const container = div('error-panel');
+    container.append(h('h2', undefined, 'Error'), p(undefined, message));
+    app.replaceChildren(container);
+}
+
+// ─── Message helpers ───────────────────────────────────────────────────────
 
 function requestWindow(window: WindowKey): void {
     vscode.postMessage({ type: 'request-window', payload: { window } });
 }
 
-function renderError(message: string): void {
-    if (app === null) {
-        return;
+// ─── Number formatters ─────────────────────────────────────────────────────
+
+function fmtTokens(n: number): string {
+    if (n >= 1_000_000_000) return `${+(n / 1e9).toFixed(n >= 10e9 ? 1 : 2)}B`;
+    if (n >= 1_000_000)     return `${+(n / 1e6).toFixed(n >= 100e6 ? 1 : 2)}M`;
+    if (n >= 10_000)        return `${Math.round(n / 1e3)}K`;
+    if (n >= 1_000)         return `${+(n / 1e3).toFixed(1)}K`;
+    return String(n);
+}
+
+function fmtTokensCompact(n: number): string {
+    if (n >= 1e9) return `${(n / 1e9).toFixed(1)}B`;
+    if (n >= 1e6) return `${(n / 1e6).toFixed(1)}M`;
+    if (n >= 1e3) return `${Math.round(n / 1e3)}K`;
+    return String(n);
+}
+
+function fmtUsd(n: number): string {
+    if (n === 0)   return '$0';
+    if (n >= 100)  return `$${n.toFixed(0)}`;
+    if (n >= 1)    return `$${n.toFixed(2)}`;
+    if (n >= 0.01) return `$${n.toFixed(3)}`;
+    return `$${n.toFixed(4)}`;
+}
+
+function fmtModel(model: string): string {
+    // Strip 8-digit date suffix
+    let m = model.replace(/-\d{8}$/, '');
+
+    if (m.startsWith('claude-')) {
+        m = m.slice('claude-'.length);
+        // New format: sonnet-4-6, opus-4-7, haiku-4-5
+        const nMatch = /^([a-z]+)-(\d+)-(\d+)$/.exec(m);
+        if (nMatch !== null) return `${cap(nMatch[1] ?? '')} ${nMatch[2]}.${nMatch[3]}`;
+        // Old format: 3-5-sonnet
+        const oMatch = /^(\d+)-(\d+)-([a-z]+)$/.exec(m);
+        if (oMatch !== null) return `${cap(oMatch[3] ?? '')} ${oMatch[1]}.${oMatch[2]}`;
+        // Fallback: capitalise parts
+        return m.split('-').map(cap).join(' ');
     }
-    const container = element('section', 'empty error');
-    container.append(element('h2', undefined, 'Dashboard error'), element('p', undefined, message));
-    app.replaceChildren(container);
-}
 
-function tokenDetail(data: WindowDataPayload): string {
-    return `${formatNumber(data.totals.inputTokens)} in · ${formatNumber(data.totals.outputTokens)} out`;
-}
-
-function confidenceDot(confidence: WindowDataPayload['totals']['costConfidence']): string {
-    return `<span class="confidence ${confidence}" title="${confidence} confidence"></span>`;
-}
-
-function formatUsd(value: number): string {
-    return `$${value.toFixed(value >= 1 ? 2 : 4)}`;
-}
-
-function formatNumber(value: number): string {
-    return new Intl.NumberFormat().format(value);
-}
-
-function formatTime(iso: string): string {
-    return new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(iso));
-}
-
-function element<K extends keyof HTMLElementTagNameMap>(
-    tagName: K,
-    className?: string,
-    text?: string,
-): HTMLElementTagNameMap[K] {
-    const node = document.createElement(tagName);
-    if (className !== undefined) {
-        node.className = className;
+    if (m.startsWith('gpt-'))    return m.replace('gpt-', 'GPT-');
+    if (m.startsWith('gemini-')) {
+        return 'Gemini ' + m.slice('gemini-'.length).split('-').map(cap).join(' ');
     }
-    if (text !== undefined) {
-        node.textContent = text;
-    }
+    return m;
+}
+
+function cap(s: string): string { return s.charAt(0).toUpperCase() + s.slice(1); }
+
+function fmtRelative(iso: string): string {
+    const diff = Date.now() - new Date(iso).getTime();
+    const mins = Math.floor(diff / 60_000);
+    if (mins < 2)  return 'just now';
+    if (mins < 60) return `${mins}m ago`;
+    const hrs = Math.floor(mins / 60);
+    if (hrs < 24)  return `${hrs}h ago`;
+    const days = Math.floor(hrs / 24);
+    if (days === 1) return 'yesterday';
+    return new Intl.DateTimeFormat(undefined, { month: 'short', day: 'numeric' }).format(new Date(iso));
+}
+
+function fmtSlug(slug: string): string {
+    return slug
+        .replace(/^[a-zA-Z]--/, '')   // strip drive prefix (d--)
+        .replace(/-{2,}/g, '/')        // double dashes → slash
+        .split('/')
+        .filter(Boolean)
+        .pop() ?? slug;
+}
+
+// ─── Agent helpers ─────────────────────────────────────────────────────────
+
+function agentColor(id: string): string {
+    if (id === 'claude-code') return 'var(--vscode-charts-blue,#4FC3F7)';
+    if (id === 'codex-cli')   return 'var(--vscode-charts-green,#81C995)';
+    if (id === 'gemini-cli')  return 'var(--vscode-charts-purple,#CE93D8)';
+    return 'var(--vscode-charts-blue)';
+}
+
+function agentShort(id: string): string {
+    if (id === 'claude-code') return 'Claude';
+    if (id === 'codex-cli')   return 'Codex';
+    if (id === 'gemini-cli')  return 'Gemini';
+    return id;
+}
+
+// ─── Confidence dot ────────────────────────────────────────────────────────
+
+function confDot(conf: 'high' | 'medium' | 'low'): string {
+    return `<span class="conf conf-${conf}" title="${conf} confidence"></span>`;
+}
+
+// ─── DOM helpers ───────────────────────────────────────────────────────────
+
+function el<T extends HTMLElement>(tag: string, cls?: string, text?: string): T {
+    const node = document.createElement(tag) as T;
+    if (cls !== undefined)  node.className = cls;
+    if (text !== undefined) node.textContent = text;
     return node;
 }
 
-function svgTitle(text: string): SVGTitleElement {
-    const title = document.createElementNS('http://www.w3.org/2000/svg', 'title');
-    title.textContent = text;
-    return title;
+function div(cls?: string, text?: string): HTMLDivElement           { return el('div',    cls, text); }
+function span(cls?: string, text?: string): HTMLSpanElement         { return el('span',   cls, text); }
+function p(cls?: string, text?: string): HTMLParagraphElement       { return el('p',      cls, text); }
+function h(tag: 'h1' | 'h2', cls?: string, text?: string): HTMLHeadingElement { return el(tag, cls, text); }
+function th(text?: string): HTMLTableCellElement                    { return el('th', undefined, text); }
+function td(text?: string): HTMLTableCellElement                    { return el('td', undefined, text); }
+
+function actionBtn(
+    label: string,
+    type: 'export-csv' | 'run-doctor' | 'open-settings' | 'request-dashboard',
+): HTMLButtonElement {
+    const btn = el<HTMLButtonElement>('button', 'secondary', label);
+    btn.type = 'button';
+    btn.addEventListener('click', () => {
+        if (type === 'request-dashboard') { requestWindow(activeWindow); return; }
+        vscode.postMessage({ type });
+    });
+    return btn;
+}
+
+// ─── SVG helpers ───────────────────────────────────────────────────────────
+
+function svgEl<T extends SVGElement>(tag: string): T {
+    return document.createElementNS('http://www.w3.org/2000/svg', tag) as T;
 }
 
 function svgText(x: number, y: number, text: string): SVGTextElement {
-    const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-    label.setAttribute('x', String(x));
-    label.setAttribute('y', String(y));
-    label.setAttribute('fill', 'var(--vscode-descriptionForeground)');
-    label.setAttribute('font-size', '11');
-    label.textContent = text;
-    return label;
+    const node = svgEl<SVGTextElement>('text');
+    node.setAttribute('x', String(x));
+    node.setAttribute('y', String(y));
+    node.setAttribute('fill', 'var(--vscode-descriptionForeground)');
+    node.setAttribute('font-size', '9');
+    node.textContent = text;
+    return node;
 }
