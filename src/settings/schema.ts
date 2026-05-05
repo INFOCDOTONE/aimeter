@@ -24,6 +24,18 @@ export const settingsSchema = z
     retention: z.object({
       days: z.number().min(7).max(3650),
     }),
+    pricing: z.object({
+      overrides: z.record(
+        z
+          .object({
+            inputUsdPerMillion: z.number().nonnegative(),
+            outputUsdPerMillion: z.number().nonnegative(),
+            cacheReadUsdPerMillion: z.number().nonnegative(),
+            cacheWriteUsdPerMillion: z.number().nonnegative(),
+          })
+          .strict(),
+      ),
+    }),
     network: z.object({
       updateCheck: z.boolean(),
     }),

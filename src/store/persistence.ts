@@ -4,7 +4,7 @@ import { ensureDir, readJsonFile, writeJsonFileAtomic } from '../lib/fs.js';
 import { createEventId, createInstallId } from '../lib/id.js';
 import { monthKey, startOfLocalDay } from '../lib/time.js';
 import type { ParsedUsageEvent } from '../parsers/types.js';
-import { estimateCost } from '../pricing/compute.js';
+import { estimateCost, type PricingOverrides } from '../pricing/compute.js';
 import { migrateMeta } from './migrations.js';
 import {
   metaSchema,
@@ -21,12 +21,18 @@ export class LocalEventStore {
   private readonly metaPath: string;
   private readonly offsetsPath: string;
   private readonly ids = new Set<string>();
+  private pricingOverrides: PricingOverrides;
 
-  public constructor(globalStoragePath: string) {
+  public constructor(globalStoragePath: string, pricingOverrides: PricingOverrides = {}) {
     this.rootPath = path.join(globalStoragePath, 'infoc-one.aimeter');
     this.eventsPath = path.join(this.rootPath, 'events');
     this.metaPath = path.join(this.rootPath, 'meta.json');
     this.offsetsPath = path.join(this.rootPath, 'offsets.json');
+    this.pricingOverrides = pricingOverrides;
+  }
+
+  public setPricingOverrides(pricingOverrides: PricingOverrides): void {
+    this.pricingOverrides = pricingOverrides;
   }
 
   public async init(): Promise<void> {
@@ -85,12 +91,15 @@ export class LocalEventStore {
     });
   }
 
-  public async readTodaySummary(now = new Date()): Promise<{ tokens: number; costUsdEstimated: number }> {
+  public async readTodaySummary(
+    now = new Date(),
+  ): Promise<{ tokens: number; costUsdEstimated: number; costConfidence: 'high' | 'medium' | 'low' }> {
+    type TodaySummary = { tokens: number; costUsdEstimated: number; costConfidence: 'high' | 'medium' | 'low' };
     const start = startOfLocalDay(now);
     const events = await this.readAllEvents();
     return events
       .filter((event) => new Date(event.occurredAt).getTime() >= start.getTime())
-      .reduce(
+      .reduce<TodaySummary>(
         (summary, event) => ({
           tokens:
             summary.tokens +
@@ -99,8 +108,9 @@ export class LocalEventStore {
             event.cacheReadTokens +
             event.cacheWriteTokens,
           costUsdEstimated: summary.costUsdEstimated + event.costUsdEstimated,
+          costConfidence: combineConfidence(summary.costConfidence, event.costConfidence),
         }),
-        { tokens: 0, costUsdEstimated: 0 },
+        { tokens: 0, costUsdEstimated: 0, costConfidence: 'high' },
       );
   }
 
@@ -147,7 +157,7 @@ export class LocalEventStore {
   }
 
   private toStoredEvent(event: ParsedUsageEvent): StoredEvent {
-    const estimated = estimateCost(event);
+    const estimated = estimateCost(event, undefined, this.pricingOverrides);
     return storedEventSchema.parse({
       id: createEventId(event.agent, event.upstreamId),
       agent: event.agent,
@@ -166,6 +176,19 @@ export class LocalEventStore {
       schemaVersion: 1,
     });
   }
+}
+
+function combineConfidence(
+  left: 'high' | 'medium' | 'low',
+  right: 'high' | 'medium' | 'low',
+): 'high' | 'medium' | 'low' {
+  if (left === 'low' || right === 'low') {
+    return 'low';
+  }
+  if (left === 'medium' || right === 'medium') {
+    return 'medium';
+  }
+  return 'high';
 }
 
 export async function fileSize(filePath: string): Promise<number> {

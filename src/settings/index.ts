@@ -26,6 +26,9 @@ export function readSettings(): AIMeterSettings {
     retention: {
       days: config.get('retention.days', 365),
     },
+    pricing: {
+      overrides: config.get('pricing.overrides', {}),
+    },
     network: {
       updateCheck: config.get('network.updateCheck', false),
     },

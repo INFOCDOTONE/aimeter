@@ -2,7 +2,67 @@
 
 > Meter every AI agent, in one place.
 
-A free VS Code extension that tracks AI coding-agent token usage locally and privately. Built first; hosted SaaS deferred until Track 1 shows traction.
+A free VS Code extension that tracks AI coding-agent token usage locally and privately. AIMeter reads local JSONL session logs from Claude Code, Codex CLI, and Gemini CLI, then shows token totals and estimated cost inside VS Code.
+
+---
+
+## What it does
+
+- Tracks Claude Code, Codex CLI, and Gemini CLI usage from local session logs
+- Shows today's estimated cost or token count in the status bar
+- Provides a sidebar dashboard for Today, 7d, and 30d windows
+- Breaks usage down by agent, model, and recent session
+- Exports local event data to CSV
+- Runs a Doctor check for parser paths, readable logs, storage, and pricing freshness
+- Supports per-model pricing overrides for local estimates
+
+All costs are estimates with confidence indicators. AIMeter never claims to match provider billing.
+
+## Privacy
+
+AIMeter is local-first by design:
+
+- No telemetry, analytics, accounts, auth, or API keys
+- No source code or editor buffers are read
+- No prompts or completions are stored
+- No outbound HTTP calls except the optional update check, which is off by default
+- Event data stays in VS Code's extension storage on your machine
+- You can clear stored data any time with `AIMeter: Clear All Stored Data...`
+
+## Commands
+
+- `AIMeter: Open Dashboard`
+- `AIMeter: Export CSV...`
+- `AIMeter: Refresh Now`
+- `AIMeter: Clear All Stored Data...`
+- `AIMeter: Show Output Logs`
+- `AIMeter: Run Doctor (Diagnostics)`
+
+## Settings
+
+- `aimeter.statusBar.enabled`
+- `aimeter.statusBar.format`: `cost-today`, `tokens-today`, or `both`
+- `aimeter.parsers.claudeCode.*`
+- `aimeter.parsers.codexCli.*`
+- `aimeter.parsers.geminiCli.*`
+- `aimeter.pricing.overrides`
+- `aimeter.retention.days`
+- `aimeter.network.updateCheck`
+
+Pricing override example:
+
+```json
+{
+	"aimeter.pricing.overrides": {
+		"gpt-5": {
+			"inputUsdPerMillion": 1.25,
+			"outputUsdPerMillion": 10,
+			"cacheReadUsdPerMillion": 0.125,
+			"cacheWriteUsdPerMillion": 0
+		}
+	}
+}
+```
 
 ---
 

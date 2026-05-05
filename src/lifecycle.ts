@@ -19,7 +19,8 @@ import {
 export async function startAIMeter(context: vscode.ExtensionContext): Promise<void> {
   const output = vscode.window.createOutputChannel('AIMeter');
   const logger = new Logger(output);
-  const store = new LocalEventStore(context.globalStorageUri.fsPath);
+  const settings = readSettings();
+  const store = new LocalEventStore(context.globalStorageUri.fsPath, settings.pricing.overrides);
   await store.init();
 
   const statusBar = new AIMeterStatusBar(store);
@@ -40,7 +41,6 @@ export async function startAIMeter(context: vscode.ExtensionContext): Promise<vo
     ),
   );
 
-  const settings = readSettings();
   const enabledParsers: Array<{ enabled: boolean; paths: string[]; parser: JsonlParser }> = [
     {
       enabled: settings.parsers.claudeCode.enabled,

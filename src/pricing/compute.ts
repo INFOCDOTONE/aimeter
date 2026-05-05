@@ -13,6 +13,15 @@ export type PricingSnapshot = {
   source: PricingSource;
 };
 
+export type PricingOverride = {
+  inputUsdPerMillion: number;
+  outputUsdPerMillion: number;
+  cacheReadUsdPerMillion: number;
+  cacheWriteUsdPerMillion: number;
+};
+
+export type PricingOverrides = Record<string, PricingOverride>;
+
 export type EstimatedCost = {
   costUsdEstimated: number;
   costConfidence: CostConfidence;
@@ -23,8 +32,26 @@ export function normalizeModel(model: string): string {
   return model.replace(/-\d{8}$/, '');
 }
 
-export function estimateCost(event: ParsedUsageEvent, catalog = DEFAULT_CATALOG): EstimatedCost {
+export function estimateCost(
+  event: ParsedUsageEvent,
+  catalog = DEFAULT_CATALOG,
+  overrides: PricingOverrides = {},
+): EstimatedCost {
   const normalized = normalizeModel(event.model);
+  const override = overrides[normalized] ?? overrides[event.model];
+  if (override !== undefined) {
+    return estimateFromEntry(event, {
+      provider: providerForAgent(event.agent),
+      model: normalized,
+      inputUsdPerMillion: override.inputUsdPerMillion,
+      outputUsdPerMillion: override.outputUsdPerMillion,
+      cacheReadUsdPerMillion: override.cacheReadUsdPerMillion,
+      cacheWriteUsdPerMillion: override.cacheWriteUsdPerMillion,
+      verifiedAt: new Date().toISOString().slice(0, 10),
+      sourceUrl: 'user-override://aimeter-settings',
+    }, 'override');
+  }
+
   const entry = catalog.find((candidate) => candidate.model === normalized);
 
   if (!entry) {
@@ -42,10 +69,14 @@ export function estimateCost(event: ParsedUsageEvent, catalog = DEFAULT_CATALOG)
     };
   }
 
-  return estimateFromEntry(event, entry);
+  return estimateFromEntry(event, entry, 'catalog');
 }
 
-function estimateFromEntry(event: ParsedUsageEvent, entry: PricingEntry): EstimatedCost {
+function estimateFromEntry(
+  event: ParsedUsageEvent,
+  entry: PricingEntry,
+  source: PricingSource,
+): EstimatedCost {
   const inputCost = (event.inputTokens / 1_000_000) * entry.inputUsdPerMillion;
   const outputCost = (event.outputTokens / 1_000_000) * entry.outputUsdPerMillion;
   const cacheReadCost = (event.cacheReadTokens / 1_000_000) * entry.cacheReadUsdPerMillion;
@@ -53,16 +84,26 @@ function estimateFromEntry(event: ParsedUsageEvent, entry: PricingEntry): Estima
 
   return {
     costUsdEstimated: roundUsd(inputCost + outputCost + cacheReadCost + cacheWriteCost),
-    costConfidence: confidenceForVerifiedAt(entry.verifiedAt),
+    costConfidence: source === 'override' ? 'high' : confidenceForVerifiedAt(entry.verifiedAt),
     pricingSnapshot: {
       inputUsdPerMillion: entry.inputUsdPerMillion,
       outputUsdPerMillion: entry.outputUsdPerMillion,
       cacheReadUsdPerMillion: entry.cacheReadUsdPerMillion,
       cacheWriteUsdPerMillion: entry.cacheWriteUsdPerMillion,
       verifiedAt: entry.verifiedAt,
-      source: 'catalog',
+      source,
     },
   };
+}
+
+function providerForAgent(agent: ParsedUsageEvent['agent']): PricingEntry['provider'] {
+  if (agent === 'codex-cli') {
+    return 'openai';
+  }
+  if (agent === 'gemini-cli') {
+    return 'google';
+  }
+  return 'anthropic';
 }
 
 function confidenceForVerifiedAt(verifiedAt: string): CostConfidence {

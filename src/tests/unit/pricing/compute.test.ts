@@ -19,6 +19,21 @@ describe('pricing compute', () => {
     expect(estimate.costConfidence).toBe('low');
     expect(estimate.pricingSnapshot.source).toBe('missing');
   });
+
+  it('uses user pricing overrides with high confidence', () => {
+    const estimate = estimateCost(event(), undefined, {
+      'claude-sonnet-4': {
+        inputUsdPerMillion: 10,
+        outputUsdPerMillion: 20,
+        cacheReadUsdPerMillion: 1,
+        cacheWriteUsdPerMillion: 2,
+      },
+    });
+
+    expect(estimate.costUsdEstimated).toBe(0.03);
+    expect(estimate.costConfidence).toBe('high');
+    expect(estimate.pricingSnapshot.source).toBe('override');
+  });
 });
 
 function event(): ParsedUsageEvent {

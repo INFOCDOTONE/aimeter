@@ -33,6 +33,24 @@ describe('LocalEventStore', () => {
     await store.setOffset('/tmp/session.jsonl', 42);
     await expect(store.getOffset('/tmp/session.jsonl')).resolves.toBe(42);
   });
+
+  it('applies pricing overrides when appending new events', async () => {
+    const dir = await mkdtemp(path.join(os.tmpdir(), 'aimeter-store-'));
+    const store = new LocalEventStore(dir, {
+      'claude-sonnet-4': {
+        inputUsdPerMillion: 10,
+        outputUsdPerMillion: 20,
+        cacheReadUsdPerMillion: 1,
+        cacheWriteUsdPerMillion: 2,
+      },
+    });
+    await store.init();
+
+    const appended = await store.appendParsedEvents([event('evt_override')]);
+
+    expect(appended[0]?.pricingSnapshot.source).toBe('override');
+    expect(appended[0]?.costConfidence).toBe('high');
+  });
 });
 
 function event(upstreamId: string): ParsedUsageEvent {

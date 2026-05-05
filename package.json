@@ -109,7 +109,8 @@
         },
         "aimeter.parsers.claudeCode.enabled": {
           "type": "boolean",
-          "default": true
+          "default": true,
+          "description": "Watch Claude Code local JSONL session logs."
         },
         "aimeter.parsers.claudeCode.paths": {
           "type": "array",
@@ -121,30 +122,34 @@
         },
         "aimeter.parsers.codexCli.enabled": {
           "type": "boolean",
-          "default": true
+          "default": true,
+          "description": "Watch Codex CLI local JSONL session logs."
         },
         "aimeter.parsers.codexCli.paths": {
           "type": "array",
           "items": {
             "type": "string"
           },
-          "default": []
+          "default": [],
+          "description": "Override default ~/.codex/sessions path. Empty = use default."
         },
         "aimeter.parsers.geminiCli.enabled": {
           "type": "boolean",
-          "default": true
+          "default": true,
+          "description": "Watch Gemini CLI local JSONL session logs."
         },
         "aimeter.parsers.geminiCli.paths": {
           "type": "array",
           "items": {
             "type": "string"
           },
-          "default": []
+          "default": [],
+          "description": "Override default ~/.gemini/sessions path. Empty = use default."
         },
         "aimeter.pricing.overrides": {
           "type": "object",
           "default": {},
-          "description": "Per-model rate overrides keyed by model id."
+          "description": "Per-model estimated pricing overrides keyed by model id. Values use inputUsdPerMillion, outputUsdPerMillion, cacheReadUsdPerMillion, and cacheWriteUsdPerMillion."
         },
         "aimeter.retention.days": {
           "type": "number",
