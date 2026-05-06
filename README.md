@@ -2,123 +2,122 @@
 
 > Meter every AI agent, in one place.
 
-A free VS Code extension that tracks AI coding-agent token usage locally and privately. AIMeter reads local JSONL session logs from Claude Code, Codex CLI, and Gemini CLI, then shows token totals and estimated cost inside VS Code.
+![INFOC ONE AIMeter hero](media/hero.png)
 
----
+> ## Pilot release - please read before installing
+>
+> AIMeter is currently a **pilot release** offered free of charge during evaluation.
+> All cost figures are **best-effort estimates from API rates**, not actual bills.
+> Your provider plan (for example Pro, Max, enterprise, bundles, or credits) can produce different billed amounts.
+> The Extension is provided **"as is"** with no warranty.
+> See [DISCLAIMER.md](./DISCLAIMER.md) for the full terms, [PRIVACY.md](./PRIVACY.md)
+> for the privacy policy, and [LICENSE](./LICENSE) for the MIT license under
+> which AIMeter is distributed.
+>
+> By installing or using AIMeter you agree to those terms.
 
-## What it does
+AIMeter is a free VS Code extension that shows your AI coding-agent token usage and estimated cost inside VS Code. It reads local JSONL session logs for supported local agents and can optionally import GitHub Copilot usage from GitHub's API when you explicitly connect it.
 
-- Tracks Claude Code, Codex CLI, and Gemini CLI usage from local session logs
-- Shows today's estimated cost or token count in the status bar
-- Provides a sidebar dashboard for Today, 7d, and 30d windows
-- Breaks usage down by agent, model, and recent session
-- Exports local event data to CSV
-- Runs a Doctor check for parser paths, readable logs, storage, and pricing freshness
-- Supports per-model pricing overrides for local estimates
+## Features
 
-All costs are estimates with confidence indicators. AIMeter never claims to match provider billing.
+- Track Claude Code, Codex CLI, and Gemini CLI usage from local session logs
+- Optionally import GitHub Copilot usage with a user-provided PAT stored in VS Code SecretStorage
+- Show today's estimated cost or token count in the status bar
+- Open a sidebar dashboard for Today, 7d, and 30d usage windows
+- Break down usage by agent, model, and recent session
+- Export local event data to CSV
+- Run Doctor diagnostics for parser paths, storage, Copilot connection, and pricing freshness
+- Override pricing rates per model for local estimated cost calculations
+
+All cost figures are estimates with confidence indicators based on API rates. AIMeter never claims to match provider billing, especially for plan-included usage.
+
+## Installation
+
+1. Marketplace: install `infoc-one.aimeter` from the VS Code Marketplace.
+2. Command line: run `code --install-extension infoc-one.aimeter` after Marketplace publish.
+3. Local VSIX: download the release `.vsix`, then run `code --install-extension aimeter-0.1.0.vsix`.
 
 ## Privacy
 
-AIMeter is local-first by design:
+AIMeter has no telemetry, no analytics, no AIMeter account, and no AIMeter backend. It never reads source code, editor buffers, prompts, completions, workspace file contents, or environment variables.
 
-- No telemetry, analytics, accounts, auth, or API keys
-- No source code or editor buffers are read
-- No prompts or completions are stored
-- No outbound HTTP calls except the optional update check, which is off by default
-- Event data stays in VS Code's extension storage on your machine
-- You can clear stored data any time with `AIMeter: Clear All Stored Data...`
+Local agent data stays in VS Code extension storage on your machine. GitHub Copilot import is disabled by default and only runs after you connect it; the PAT is stored in VS Code SecretStorage, never settings, logs, event data, CSV exports, or source control.
 
-## Commands
+Read the full privacy note in [PRIVACY.md](https://github.com/infoc-one/aimeter-infoc-one/blob/main/PRIVACY.md).
 
-- `AIMeter: Open Dashboard`
-- `AIMeter: Export CSV...`
-- `AIMeter: Refresh Now`
-- `AIMeter: Clear All Stored Data...`
-- `AIMeter: Show Output Logs`
-- `AIMeter: Run Doctor (Diagnostics)`
+## Supported Agents
 
-## Settings
+| Source                                             | Status          | How AIMeter reads it                                              |
+| -------------------------------------------------- | --------------- | ----------------------------------------------------------------- |
+| Claude Code                                        | Supported       | Local JSONL session logs under `~/.claude/projects`               |
+| Codex CLI                                          | Supported       | Local JSONL session logs under `~/.codex/sessions`                |
+| Gemini CLI                                         | Supported       | Local JSONL session logs under `~/.gemini/sessions`               |
+| GitHub Copilot                                     | Optional import | GitHub usage API after explicit PAT connection                    |
+| Cursor / Windsurf / Cline / Roo / Continue / Aider | Not in v0.1.0   | Deferred until there is a trusted local log or approved usage API |
 
-- `aimeter.statusBar.enabled`
-- `aimeter.statusBar.format`: `cost-today`, `tokens-today`, or `both`
-- `aimeter.parsers.claudeCode.*`
-- `aimeter.parsers.codexCli.*`
-- `aimeter.parsers.geminiCli.*`
-- `aimeter.pricing.overrides`
-- `aimeter.retention.days`
-- `aimeter.network.updateCheck`
+## Important Settings
+
+- `aimeter.statusBar.enabled`: show or hide the status bar item
+- `aimeter.statusBar.format`: choose `cost-today`, `tokens-today`, or `both`
+- `aimeter.parsers.claudeCode.enabled`: watch Claude Code logs
+- `aimeter.parsers.codexCli.enabled`: watch Codex CLI logs
+- `aimeter.parsers.geminiCli.enabled`: watch Gemini CLI logs
+- `aimeter.providers.githubCopilot.enabled`: enable GitHub Copilot usage import after connecting a PAT
+- `aimeter.pricing.overrides`: override estimated model pricing locally
+- `aimeter.retention.days`: choose how long event history is kept locally
+- `aimeter.network.updateCheck`: optional update check, off by default
 
 Pricing override example:
 
 ```json
 {
-	"aimeter.pricing.overrides": {
-		"gpt-5": {
-			"inputUsdPerMillion": 1.25,
-			"outputUsdPerMillion": 10,
-			"cacheReadUsdPerMillion": 0.125,
-			"cacheWriteUsdPerMillion": 0
-		}
-	}
+  "aimeter.pricing.overrides": {
+    "gpt-5": {
+      "inputUsdPerMillion": 1.25,
+      "outputUsdPerMillion": 10,
+      "cacheReadUsdPerMillion": 0.125,
+      "cacheWriteUsdPerMillion": 0
+    }
+  }
 }
 ```
 
----
+## Screenshots
 
-## Two-track plan
+Founder TODO: replace `media/icon.png` with the final 128x128 production icon before Marketplace submission. The current file is a placeholder release asset.
 
-| Track | What | When | Status |
-|---|---|---|---|
-| **Track 1 (NOW)** | Free VS Code extension | ~2 weeks | **Active build** |
-| Track 2 (DEFERRED) | Hosted SaaS for team leads | Triggered by Track 1 traction | **Frozen, archived in `_track2-saas/`** |
+Real Marketplace screenshots will live under `media/screenshots/` before publish:
 
-Track 1 is the build target right now. Track 2 is the eventual revenue product, but its spec stays untouched until at least one of these is true:
-- ≥ 1,000 weekly active extension users
-- ≥ 5 unsolicited inbound messages from team leads
-- ≥ 1 company requests a paid invoice
+- `media/screenshots/01-dashboard-dark.png`
+- `media/screenshots/02-dashboard-light.png`
+- `media/screenshots/03-status-bar.png`
+- `media/screenshots/04-doctor.png`
+- `media/screenshots/05-settings.png`
+- `media/screenshots/06-demo.gif`
 
----
+These must be real captures from the extension UI, not generated placeholders.
 
-## Read in this order
+## Roadmap
 
-1. **[`CLAUDE.md`](./CLAUDE.md)** — project contract for Claude Code. The kickoff file.
-2. **[`HANDOVER.md`](./HANDOVER.md)** — strategic context, two-track plan, what's NOT being built.
-3. **[`DECISIONS.md`](./DECISIONS.md)** — locked decisions register. Final, not re-litigated.
-4. **[`SOLUTION.md`](./SOLUTION.md)** — autopilot-grade build spec for the VS Code extension. 25 sections covering manifest, parsers, storage, UI, milestones, Definition of Done.
+Track 1 v0.1.x stays focused on the free VS Code extension:
 
-**The authoritative document set is exactly these five files** (this README + the four above). The `_track2-saas/` folder contains archived SaaS spec — informational only, do not act on it during Track 1. Any other file is non-authoritative.
+- Harden local parsers and schema fixtures
+- Improve dashboard polish and empty states
+- Add real Marketplace screenshots and a short demo GIF
+- Expand Doctor diagnostics for common Windows, macOS, and Linux path issues
+- Add more local-agent sources only when there is a trusted token log or approved usage API
 
----
+No backend, SaaS, team sync, payment logic, license checks, or telemetry are planned for Track 1.
 
-## Quick orientation
+## Contributing
 
-- **Brand:** Infoc (company) · INFOC ONE (platform family) · AIMeter (this product)
-- **Marketplace publisher ID:** `infoc-one` · display name `INFOC ONE`
-- **Marketplace extension ID:** `infoc-one.aimeter`
-- **Repo:** `aimeter-infoc-one/`
-- **Pricing:** Free forever in this track. No Pro tier. No payment logic.
-- **Privacy:** All data stays on the developer's machine. Zero outbound HTTP except an optional, off-by-default update check.
-- **Stack:** Vanilla TypeScript + esbuild + chokidar + zod. No backend, no telemetry, no framework in the webview.
-- **Build time:** ~2 weeks across 5 milestones (plus Milestone 0 for namespace lock).
+Issues and discussions are welcome:
 
----
+- Bugs: https://github.com/infoc-one/aimeter-infoc-one/issues
+- Discussions: https://github.com/infoc-one/aimeter-infoc-one/discussions
 
-## Use with Claude Code in VS Code
+Before contributing code, read [CLAUDE.md](CLAUDE.md), [DECISIONS.md](DECISIONS.md), and [SOLUTION.md](SOLUTION.md). Privacy rules are product rules in this repo.
 
-```bash
-mkdir aimeter-infoc-one && cd aimeter-infoc-one
-git init
-# Copy CLAUDE.md, HANDOVER.md, SOLUTION.md, DECISIONS.md, README.md into root
-# Copy _track2-saas/ folder verbatim (do not edit)
-# Open the folder in VS Code
-# In Claude Code panel, send: "Read CLAUDE.md, then proceed."
-```
+## License
 
-Claude Code reads the contract, follows Phase 1 milestones in `SOLUTION.md` §21, and pauses for review at each milestone boundary. It will not touch `_track2-saas/` — that's archived for the future product.
-
----
-
-## Tagline
-
-*Meter every AI agent, in one place.*
+MIT. Copyright (c) 2026 Infochola Solutions Pte Ltd.
