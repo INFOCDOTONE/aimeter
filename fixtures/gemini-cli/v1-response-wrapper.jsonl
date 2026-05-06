@@ -1,1 +1,0 @@
-{"id":"gemini_evt_002","session_id":"gemini-session-beta","created_at":"2026-05-05T11:30:00.000Z","cwd":"C:\\work\\beta","response":{"modelVersion":"gemini-2.5-flash","usageMetadata":{"promptTokenCount":500,"candidatesTokenCount":120,"cachedContentTokenCount":25}},"request":{"contents":"forbidden prompt text"}}

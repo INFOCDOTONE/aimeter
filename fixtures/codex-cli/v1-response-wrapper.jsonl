@@ -1,1 +1,0 @@
-{"session_id":"codex-session-beta","created_at":1777973400,"cwd":"C:\\work\\beta","response":{"id":"resp_codex_002","model":"gpt-4.1","usage":{"input_tokens":900,"output_tokens":210,"input_tokens_details":{"cached_tokens":40}}},"messages":[{"content":"forbidden prompt text"}]}

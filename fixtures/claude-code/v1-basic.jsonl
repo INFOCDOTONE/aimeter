@@ -1,1 +1,0 @@
-{"uuid":"evt_001","sessionId":"session-alpha","timestamp":"2026-05-05T08:00:00.000Z","cwd":"/Users/dev/work/alpha","message":{"id":"msg_001","model":"claude-sonnet-4-20250514","usage":{"input_tokens":1200,"output_tokens":340,"cache_read_input_tokens":50,"cache_creation_input_tokens":20},"content":[{"type":"text","text":"forbidden prompt text"}]}}

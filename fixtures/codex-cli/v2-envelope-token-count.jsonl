@@ -1,3 +1,0 @@
-{"type":"session_meta","timestamp":"2026-05-05T11:59:59.000Z","payload":{"id":"codex-session-delta","cwd":"/workspaces/delta","model_provider":"openai","base_instructions":"forbidden prompt text"}}
-{"type":"turn_context","timestamp":"2026-05-05T12:00:00.000Z","payload":{"model":"gpt-5","cwd":"/workspaces/delta","summary":"forbidden prompt text"}}
-{"type":"event_msg","timestamp":"2026-05-05T12:00:01.000Z","payload":{"type":"token_count","info":{"last_token_usage":{"input_tokens":27404,"cached_input_tokens":20864,"output_tokens":235,"reasoning_output_tokens":33,"total_tokens":27639},"total_token_usage":{"input_tokens":27404,"cached_input_tokens":20864,"output_tokens":235,"reasoning_output_tokens":33,"total_tokens":27639}},"rate_limits":{"plan_type":"paid"}}}

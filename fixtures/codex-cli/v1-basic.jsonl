@@ -1,1 +1,0 @@
-{"id":"codex_evt_001","conversation_id":"codex-session-alpha","timestamp":"2026-05-05T09:00:00.000Z","cwd":"/workspaces/alpha","model":"gpt-5","usage":{"prompt_tokens":1500,"completion_tokens":420,"cached_tokens":80},"input":"forbidden prompt text","output":"forbidden completion text"}
