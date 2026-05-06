@@ -4,6 +4,8 @@
 
 ![INFOC ONE AIMeter hero](media/hero.png)
 
+![AIMeter product screenshot](media/screenshots/AIMeter Product screenshot.png)
+
 > ## Pilot release - please read before installing
 >
 > AIMeter is currently a **pilot release** offered free of charge during evaluation.
@@ -43,7 +45,7 @@ AIMeter has no telemetry, no analytics, no AIMeter account, and no AIMeter backe
 
 Local agent data stays in VS Code extension storage on your machine. GitHub Copilot import is disabled by default and only runs after you connect it; the PAT is stored in VS Code SecretStorage, never settings, logs, event data, CSV exports, or source control.
 
-Read the full privacy note in [PRIVACY.md](https://github.com/infoc-one/aimeter-infoc-one/blob/main/PRIVACY.md).
+Read the full privacy note in [PRIVACY.md](https://github.com/INFOCDOTONE/aimeter/blob/main/PRIVACY.md).
 
 ## Supported Agents
 
@@ -86,14 +88,10 @@ Pricing override example:
 
 Founder TODO: replace `media/icon.png` with the final 128x128 production icon before Marketplace submission. The current file is a placeholder release asset.
 
-Real Marketplace screenshots will live under `media/screenshots/` before publish:
+Current screenshots in this repo:
 
-- `media/screenshots/01-dashboard-dark.png`
-- `media/screenshots/02-dashboard-light.png`
-- `media/screenshots/03-status-bar.png`
-- `media/screenshots/04-doctor.png`
-- `media/screenshots/05-settings.png`
-- `media/screenshots/06-demo.gif`
+- `media/screenshots/AIMeter Product screenshot.png`
+- `media/screenshots/AIMeter Product Doctor screenshot.png`
 
 These must be real captures from the extension UI, not generated placeholders.
 
@@ -113,8 +111,8 @@ No backend, SaaS, team sync, payment logic, license checks, or telemetry are pla
 
 Issues and discussions are welcome:
 
-- Bugs: https://github.com/infoc-one/aimeter-infoc-one/issues
-- Discussions: https://github.com/infoc-one/aimeter-infoc-one/discussions
+- Bugs: https://github.com/INFOCDOTONE/aimeter/issues
+- Discussions: https://github.com/INFOCDOTONE/aimeter/discussions
 
 Before contributing code, read [CLAUDE.md](CLAUDE.md), [DECISIONS.md](DECISIONS.md), and [SOLUTION.md](SOLUTION.md). Privacy rules are product rules in this repo.
 

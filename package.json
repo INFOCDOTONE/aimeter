@@ -1,0 +1,293 @@
+{
+  "name": "aimeter",
+  "displayName": "INFOC ONE AIMeter",
+  "description": "Pilot release - Track AI coding-agent token usage privately with best-effort estimates for Claude Code, Codex CLI, Gemini CLI, and optional GitHub Copilot. Free, no telemetry.",
+  "version": "0.1.9",
+  "publisher": "infoc-one",
+  "license": "MIT",
+  "private": true,
+  "icon": "media/icon.png",
+  "galleryBanner": {
+    "color": "#0F172A",
+    "theme": "dark"
+  },
+  "qna": "https://github.com/INFOCDOTONE/aimeter/discussions",
+  "pricing": "Free",
+  "preview": true,
+  "engines": {
+    "vscode": "^1.95.0"
+  },
+  "categories": [
+    "Other",
+    "Visualization"
+  ],
+  "keywords": [
+    "ai",
+    "tokens",
+    "cost",
+    "usage",
+    "finops",
+    "claude",
+    "copilot",
+    "codex",
+    "gemini",
+    "github",
+    "metering"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/INFOCDOTONE/aimeter"
+  },
+  "bugs": {
+    "url": "https://github.com/INFOCDOTONE/aimeter/issues",
+    "email": "support@aimeter.infoc.one"
+  },
+  "homepage": "https://aimeter.infoc.one",
+  "main": "./dist/extension.js",
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "contributes": {
+    "commands": [
+      {
+        "command": "aimeter.openDashboard",
+        "title": "AIMeter: Open Dashboard"
+      },
+      {
+        "command": "aimeter.exportCsv",
+        "title": "AIMeter: Export CSV..."
+      },
+      {
+        "command": "aimeter.refresh",
+        "title": "AIMeter: Refresh Now"
+      },
+      {
+        "command": "aimeter.clearData",
+        "title": "AIMeter: Clear All Stored Data..."
+      },
+      {
+        "command": "aimeter.openLogs",
+        "title": "AIMeter: Show Output Logs"
+      },
+      {
+        "command": "aimeter.runDoctor",
+        "title": "AIMeter: Run Doctor (Diagnostics)"
+      },
+      {
+        "command": "aimeter.connectGitHubCopilot",
+        "title": "AIMeter: Connect GitHub Copilot Usage..."
+      },
+      {
+        "command": "aimeter.disconnectGitHubCopilot",
+        "title": "AIMeter: Disconnect GitHub Copilot Usage"
+      }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "aimeter",
+          "title": "AIMeter",
+          "icon": "media/icon-activitybar.svg"
+        }
+      ]
+    },
+    "views": {
+      "aimeter": [
+        {
+          "id": "aimeter.dashboard",
+          "name": "Dashboard",
+          "type": "webview"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "AIMeter",
+      "properties": {
+        "aimeter.statusBar.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show AIMeter in the status bar."
+        },
+        "aimeter.statusBar.format": {
+          "type": "string",
+          "enum": [
+            "cost-today",
+            "tokens-today",
+            "both"
+          ],
+          "default": "cost-today",
+          "description": "What to show in the status bar."
+        },
+        "aimeter.refreshIntervalSec": {
+          "type": "number",
+          "default": 30,
+          "minimum": 5,
+          "maximum": 600,
+          "description": "How often the watcher debounces and reads new lines, in seconds."
+        },
+        "aimeter.parsers.claudeCode.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Watch Claude Code local JSONL session logs."
+        },
+        "aimeter.parsers.claudeCode.paths": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [],
+          "description": "Override default ~/.claude/projects path. Empty = use default."
+        },
+        "aimeter.parsers.codexCli.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Watch Codex CLI local JSONL session logs."
+        },
+        "aimeter.parsers.codexCli.paths": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [],
+          "description": "Override default ~/.codex/sessions path. Empty = use default."
+        },
+        "aimeter.parsers.geminiCli.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Watch Gemini CLI local JSONL session logs."
+        },
+        "aimeter.parsers.geminiCli.paths": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [],
+          "description": "Override default ~/.gemini/sessions path. Empty = use default."
+        },
+        "aimeter.providers.githubCopilot.enabled": {
+          "type": "boolean",
+          "default": false,
+          "description": "Import GitHub Copilot usage from GitHub's API. Use AIMeter: Connect GitHub Copilot Usage... to enter the required GitHub PAT; AIMeter stores it in VS Code SecretStorage, not settings. OFF by default."
+        },
+        "aimeter.pricing.overrides": {
+          "type": "object",
+          "default": {},
+          "description": "Per-model estimated pricing overrides keyed by model id. Values use inputUsdPerMillion, outputUsdPerMillion, cacheReadUsdPerMillion, and cacheWriteUsdPerMillion."
+        },
+        "aimeter.billing.agentOverrides": {
+          "type": "object",
+          "default": {},
+          "description": "Override billing basis by agent id. Use subscription-included for usage covered by a plan such as Claude Max/Pro, api-metered for metered API usage, or unknown when billing cannot be inferred.",
+          "additionalProperties": {
+            "type": "string",
+            "enum": [
+              "api-metered",
+              "subscription-included",
+              "unknown"
+            ]
+          }
+        },
+        "aimeter.billing.modelOverrides": {
+          "type": "object",
+          "default": {},
+          "description": "Override billing basis by model id. Model overrides take precedence over agent overrides.",
+          "additionalProperties": {
+            "type": "string",
+            "enum": [
+              "api-metered",
+              "subscription-included",
+              "unknown"
+            ]
+          }
+        },
+        "aimeter.retention.days": {
+          "type": "number",
+          "default": 365,
+          "minimum": 7,
+          "maximum": 3650,
+          "description": "Days of event history to keep locally before pruning."
+        },
+        "aimeter.network.updateCheck": {
+          "type": "boolean",
+          "default": false,
+          "description": "Allow AIMeter to make ONE outbound request per day to check for catalog updates. OFF by default."
+        },
+        "aimeter.mirror.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Automatically write a daily CSV mirror of all tracked usage to a local folder. Files are organised as {mirrorDir}/{agent}/YYYY-MM-DD.csv and are plain CSV — open directly in Excel, Numbers, or any CSV viewer. Previous-month files are moved to {mirrorDir}/archive/ automatically."
+        },
+        "aimeter.mirror.dir": {
+          "type": "string",
+          "default": "",
+          "description": "Folder where AIMeter writes the daily CSV mirror. Empty = ~/.aimeter (created automatically). Use an absolute path to choose a different location."
+        }
+      }
+    },
+    "menus": {
+      "view/title": [
+        {
+          "command": "aimeter.refresh",
+          "when": "view == aimeter.dashboard",
+          "group": "navigation"
+        },
+        {
+          "command": "aimeter.exportCsv",
+          "when": "view == aimeter.dashboard",
+          "group": "navigation"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "dev": "node scripts/build.mjs --watch",
+    "build": "node scripts/build.mjs",
+    "package": "pnpm build && vsce package --no-dependencies -o dist/aimeter-${npm_package_version}.vsix",
+    "publish": "vsce publish --no-dependencies",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write .",
+    "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.webview.json",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:cov": "vitest run --coverage",
+    "test:vscode": "node scripts/test-vscode.mjs",
+    "license:check": "node scripts/check-licenses.js",
+    "pricing:check": "tsx scripts/check-pricing-freshness.ts",
+    "prepare": "husky"
+  },
+  "dependencies": {
+    "chokidar": "4.0.3",
+    "date-fns": "4.1.0",
+    "zod": "3.24.1"
+  },
+  "devDependencies": {
+    "@types/node": "22.10.2",
+    "@types/vscode": "1.95.0",
+    "@typescript-eslint/eslint-plugin": "8.19.0",
+    "@typescript-eslint/parser": "8.19.0",
+    "@vitest/coverage-v8": "2.1.8",
+    "@vscode/test-cli": "0.0.10",
+    "@vscode/test-electron": "2.4.1",
+    "@vscode/vsce": "3.2.1",
+    "esbuild": "0.24.2",
+    "eslint": "9.17.0",
+    "husky": "9.1.7",
+    "license-checker": "25.0.1",
+    "lint-staged": "15.3.0",
+    "prettier": "3.4.2",
+    "tsx": "4.19.2",
+    "typescript": "5.7.2",
+    "vitest": "2.1.8"
+  },
+  "packageManager": "pnpm@9.15.0",
+  "lint-staged": {
+    "*.{ts,tsx}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{md,json,css}": [
+      "prettier --write"
+    ]
+  }
+}
