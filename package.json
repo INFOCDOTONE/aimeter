@@ -1,8 +1,8 @@
 {
   "name": "aimeter",
-  "displayName": "INFOC ONE AIMeter",
+  "displayName": "INFOC ONE AI Meter",
   "description": "Track local AI coding-agent token usage and estimated cost in VS Code for Claude Code, Codex CLI, Gemini CLI, and optional GitHub Copilot usage import.",
-  "version": "0.1.10",
+  "version": "0.1.12",
   "publisher": "infoc-one",
   "license": "MIT",
   "private": true,
@@ -51,42 +51,42 @@
     "commands": [
       {
         "command": "aimeter.openDashboard",
-        "title": "AIMeter: Open Dashboard"
+        "title": "AI Meter: Open Dashboard"
       },
       {
         "command": "aimeter.exportCsv",
-        "title": "AIMeter: Export CSV..."
+        "title": "AI Meter: Export CSV..."
       },
       {
         "command": "aimeter.refresh",
-        "title": "AIMeter: Refresh Now"
+        "title": "AI Meter: Refresh Now"
       },
       {
         "command": "aimeter.clearData",
-        "title": "AIMeter: Clear All Stored Data..."
+        "title": "AI Meter: Clear All Stored Data..."
       },
       {
         "command": "aimeter.openLogs",
-        "title": "AIMeter: Show Output Logs"
+        "title": "AI Meter: Show Output Logs"
       },
       {
         "command": "aimeter.runDoctor",
-        "title": "AIMeter: Run Doctor (Diagnostics)"
+        "title": "AI Meter: Run Doctor (Diagnostics)"
       },
       {
         "command": "aimeter.connectGitHubCopilot",
-        "title": "AIMeter: Connect GitHub Copilot Usage..."
+        "title": "AI Meter: Connect GitHub Copilot Usage..."
       },
       {
         "command": "aimeter.disconnectGitHubCopilot",
-        "title": "AIMeter: Disconnect GitHub Copilot Usage"
+        "title": "AI Meter: Disconnect GitHub Copilot Usage"
       }
     ],
     "viewsContainers": {
       "activitybar": [
         {
           "id": "aimeter",
-          "title": "AIMeter",
+          "title": "AI Meter",
           "icon": "media/icon-activitybar.svg"
         }
       ]
@@ -101,12 +101,12 @@
       ]
     },
     "configuration": {
-      "title": "AIMeter",
+      "title": "AI Meter",
       "properties": {
         "aimeter.statusBar.enabled": {
           "type": "boolean",
           "default": true,
-          "description": "Show AIMeter in the status bar."
+          "description": "Show AI Meter in the status bar."
         },
         "aimeter.statusBar.format": {
           "type": "string",
@@ -167,7 +167,7 @@
         "aimeter.providers.githubCopilot.enabled": {
           "type": "boolean",
           "default": false,
-          "description": "Import GitHub Copilot usage from GitHub's API. Use AIMeter: Connect GitHub Copilot Usage... to enter the required GitHub PAT; AIMeter stores it in VS Code SecretStorage, not settings. OFF by default."
+          "description": "Import GitHub Copilot usage from GitHub's API. Use AI Meter: Connect GitHub Copilot Usage... to enter the required GitHub PAT; AI Meter stores it in VS Code SecretStorage, not settings. OFF by default."
         },
         "aimeter.pricing.overrides": {
           "type": "object",

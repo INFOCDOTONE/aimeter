@@ -4,13 +4,13 @@
 
 ![INFOC ONE AIMeter hero](media/hero.png)
 
-![AIMeter product screenshot](media/screenshots/AIMeter Product screenshot.png)
+![AI Meter product screenshot](media/screenshots/AIMeter Product screenshot.png)
 
-> Cost values shown by AIMeter are estimates based on published API rates.
+> Cost values shown by AI Meter are estimates based on published API rates.
 > They may differ from provider invoices depending on your plan details.
 > See [DISCLAIMER.md](./DISCLAIMER.md), [PRIVACY.md](./PRIVACY.md), and [LICENSE](./LICENSE).
 
-AIMeter is a free VS Code extension that shows your AI coding-agent token usage and estimated cost inside VS Code. It reads local JSONL session logs for supported local agents and can optionally import GitHub Copilot usage from GitHub's API when you explicitly connect it.
+AI Meter is a free VS Code extension that shows your AI coding-agent token usage and estimated cost inside VS Code. It reads local JSONL session logs for supported local agents and can optionally import GitHub Copilot usage from GitHub's API when you explicitly connect it.
 
 ## Features
 
@@ -23,7 +23,7 @@ AIMeter is a free VS Code extension that shows your AI coding-agent token usage 
 - Run Doctor diagnostics for parser paths, storage, Copilot connection, and pricing freshness
 - Override pricing rates per model for local estimated cost calculations
 
-All cost figures are estimates with confidence indicators based on API rates. AIMeter never claims to match provider billing, especially for plan-included usage.
+All cost figures are estimates with confidence indicators based on API rates. AI Meter never claims to match provider billing, especially for plan-included usage.
 
 ## Installation
 
@@ -33,7 +33,7 @@ All cost figures are estimates with confidence indicators based on API rates. AI
 
 ## Privacy
 
-AIMeter has no telemetry, no analytics, no AIMeter account, and no AIMeter backend. It never reads source code, editor buffers, prompts, completions, workspace file contents, or environment variables.
+AI Meter has no telemetry, no analytics, no AI Meter account, and no AI Meter backend. It never reads source code, editor buffers, prompts, completions, workspace file contents, or environment variables.
 
 Local agent data stays in VS Code extension storage on your machine. GitHub Copilot import is disabled by default and only runs after you connect it; the PAT is stored in VS Code SecretStorage, never settings, logs, event data, CSV exports, or source control.
 

@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.1.12
+
+- Replace remaining user-facing AIMeter labels with AI Meter across extension UI text and docs.
+
+## 0.1.11
+
+- Update extension display name usage to INFOC ONE AI Meter across metadata and docs.
+- Include current extension updates for the next packaged release.
+
 ## 0.1.10
 
 - Simplify extension metadata and README wording for marketplace upload compliance checks.
@@ -17,12 +26,12 @@
 
 ## 0.1.7
 
-- Treat GitHub Copilot usage API HTTP 404 responses as unsupported-access instead of generic errors, so AIMeter does not treat this account/permission limitation as an import failure.
+- Treat GitHub Copilot usage API HTTP 404 responses as unsupported-access instead of generic errors, so AI Meter does not treat this account/permission limitation as an import failure.
 - Add provider test coverage for unsupported-access status on HTTP 404.
 
 ## 0.1.6
 
-- Improve GitHub Copilot import failure diagnostics so AIMeter surfaces actionable causes in the warning message (invalid/expired token, missing access, endpoint unavailable, malformed response, network/other runtime error).
+- Improve GitHub Copilot import failure diagnostics so AI Meter surfaces actionable causes in the warning message (invalid/expired token, missing access, endpoint unavailable, malformed response, network/other runtime error).
 - Add provider regression test coverage for HTTP 401 error messaging.
 
 ## 0.1.5
@@ -35,7 +44,7 @@
 
 **Pilot release.**
 
-This is the first public pilot release of INFOC ONE AIMeter. All cost figures are best-effort estimates, not actual bills. By installing or using this extension you agree to the terms in `DISCLAIMER.md` and `PRIVACY.md`.
+This is the first public pilot release of INFOC ONE AI Meter. All cost figures are best-effort estimates, not actual bills. By installing or using this extension you agree to the terms in `DISCLAIMER.md` and `PRIVACY.md`.
 
 ### Features
 
@@ -67,7 +76,7 @@ This is the first public pilot release of INFOC ONE AIMeter. All cost figures ar
 
 ## 0.1.1
 
-- Improve AIMeter cost accuracy and billing-basis display for API-metered, subscription-included, and unknown usage.
+- Improve AI Meter cost accuracy and billing-basis display for API-metered, subscription-included, and unknown usage.
 - Document GitHub Copilot local metering limitations for Track 1.
 
 ## 0.1.0

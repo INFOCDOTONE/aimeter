@@ -11,7 +11,7 @@ export class AIMeterStatusBar {
     this.store = store;
     this.item = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
     this.item.command = 'aimeter.openDashboard';
-    this.item.name = 'AIMeter';
+    this.item.name = 'AI Meter';
   }
 
   public showNoData(): void {
@@ -20,8 +20,8 @@ export class AIMeterStatusBar {
       this.item.hide();
       return;
     }
-    this.item.text = 'AIMeter - no data yet';
-    this.item.tooltip = 'INFOC ONE AIMeter is watching local AI agent logs.';
+    this.item.text = 'AI Meter - no data yet';
+    this.item.tooltip = 'INFOC ONE AI Meter is watching local AI agent logs.';
     this.item.show();
   }
 

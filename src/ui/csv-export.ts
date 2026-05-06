@@ -8,7 +8,7 @@ export async function exportCsv(store: LocalEventStore): Promise<void> {
     const uri = await vscode.window.showSaveDialog({
         defaultUri: vscode.Uri.file(`aimeter-export-${new Date().toISOString().slice(0, 10)}.csv`),
         filters: { CSV: ['csv'] },
-        saveLabel: 'Export AIMeter CSV',
+        saveLabel: 'Export AI Meter CSV',
     });
 
     if (uri === undefined) {
@@ -19,5 +19,5 @@ export async function exportCsv(store: LocalEventStore): Promise<void> {
     const settings = readSettings();
     const csv = toCsv(events, settings.billing);
     await writeFile(uri.fsPath, csv, 'utf8');
-    await vscode.window.showInformationMessage(`AIMeter exported ${events.length} events.`);
+    await vscode.window.showInformationMessage(`AI Meter exported ${events.length} events.`);
 }

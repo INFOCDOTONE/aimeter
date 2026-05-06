@@ -59,7 +59,7 @@ export class AIMeterDashboardProvider implements vscode.WebviewViewProvider {
       });
       await this.postMessage({
         type: 'error',
-        message: 'AIMeter could not load dashboard data. See Output logs for details.',
+        message: 'AI Meter could not load dashboard data. See Output logs for details.',
       });
     }
   }
@@ -114,7 +114,7 @@ function getHtml(webview: vscode.Webview, extensionUri: vscode.Uri): string {
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src ${webview.cspSource}; script-src 'nonce-${nonce}'; style-src 'unsafe-inline';" />
-    <title>AIMeter</title>
+    <title>AI Meter</title>
     <style>
       /* ── Design tokens ───────────────────────────────── */
       :root {

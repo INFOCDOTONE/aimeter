@@ -15,7 +15,7 @@ requestWindow(activeWindow);
 window.addEventListener('message', (event: MessageEvent<unknown>) => {
     const parsed = fromExtensionSchema.safeParse(event.data);
     if (!parsed.success) {
-        renderError('AIMeter received an invalid dashboard message.');
+        renderError('AI Meter received an invalid dashboard message.');
         return;
     }
     if (parsed.data.type === 'error') { renderError(parsed.data.message); return; }
@@ -53,7 +53,7 @@ function renderDashboard(data: WindowDataPayload): void {
 
 function renderHeader(data: WindowDataPayload): HTMLElement {
     const container = div('header');
-    container.append(h('h1', undefined, 'AIMeter'));
+    container.append(h('h1', undefined, 'AI Meter'));
     container.append(span('muted text-xs', `Updated ${fmtRelative(data.generatedAt)}`));
     return container;
 }
@@ -396,7 +396,7 @@ function renderEmpty(): HTMLElement {
     const container = div('empty');
     container.append(
         h('h2', undefined, 'No events yet'),
-        p('muted text-sm', 'Run an AI coding session — AIMeter will pick it up automatically.'),
+        p('muted text-sm', 'Run an AI coding session — AI Meter will pick it up automatically.'),
         p('text-sm', 'Watching for session logs from:'),
     );
 
