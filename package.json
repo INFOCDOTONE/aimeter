@@ -1,8 +1,8 @@
 {
   "name": "aimeter",
   "displayName": "INFOC ONE AIMeter",
-  "description": "Pilot release - Track AI coding-agent token usage privately with best-effort estimates for Claude Code, Codex CLI, Gemini CLI, and optional GitHub Copilot. Free, no telemetry.",
-  "version": "0.1.9",
+  "description": "Track local AI coding-agent token usage and estimated cost in VS Code for Claude Code, Codex CLI, Gemini CLI, and optional GitHub Copilot usage import.",
+  "version": "0.1.10",
   "publisher": "infoc-one",
   "license": "MIT",
   "private": true,
@@ -42,7 +42,7 @@
     "url": "https://github.com/INFOCDOTONE/aimeter/issues",
     "email": "support@aimeter.infoc.one"
   },
-  "homepage": "https://aimeter.infoc.one",
+  "homepage": "https://github.com/INFOCDOTONE/aimeter",
   "main": "./dist/extension.js",
   "activationEvents": [
     "onStartupFinished"

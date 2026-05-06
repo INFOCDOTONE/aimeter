@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.10
+
+- Simplify extension metadata and README wording for marketplace upload compliance checks.
+- Set homepage metadata to the GitHub repository URL.
+
 ## 0.1.9
 
 - Add README inline product screenshot rendering with the tracked `media/screenshots/AIMeter Product screenshot.png` asset.

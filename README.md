@@ -6,17 +6,9 @@
 
 ![AIMeter product screenshot](media/screenshots/AIMeter Product screenshot.png)
 
-> ## Pilot release - please read before installing
->
-> AIMeter is currently a **pilot release** offered free of charge during evaluation.
-> All cost figures are **best-effort estimates from API rates**, not actual bills.
-> Your provider plan (for example Pro, Max, enterprise, bundles, or credits) can produce different billed amounts.
-> The Extension is provided **"as is"** with no warranty.
-> See [DISCLAIMER.md](./DISCLAIMER.md) for the full terms, [PRIVACY.md](./PRIVACY.md)
-> for the privacy policy, and [LICENSE](./LICENSE) for the MIT license under
-> which AIMeter is distributed.
->
-> By installing or using AIMeter you agree to those terms.
+> Cost values shown by AIMeter are estimates based on published API rates.
+> They may differ from provider invoices depending on your plan details.
+> See [DISCLAIMER.md](./DISCLAIMER.md), [PRIVACY.md](./PRIVACY.md), and [LICENSE](./LICENSE).
 
 AIMeter is a free VS Code extension that shows your AI coding-agent token usage and estimated cost inside VS Code. It reads local JSONL session logs for supported local agents and can optionally import GitHub Copilot usage from GitHub's API when you explicitly connect it.
 
